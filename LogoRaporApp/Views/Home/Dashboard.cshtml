@@ -1,0 +1,225 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Dashboard</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <style>
+            body {
+                margin: 0;
+                font-family: Arial;
+            }
+
+            /* SIDEBAR - GÜNCELLENDİ (ANA TEMA) */
+            .sidebar {
+                width: 240px;
+                height: 100vh;
+                background: linear-gradient(135deg, #0f172a, #1e293b);
+                position: fixed;
+                color: white;
+                padding-top: 20px;
+                overflow-y: auto;
+            }
+
+            .menu-item {
+                display: flex;
+                align-items: center;
+                gap: 10px;
+                margin: 8px 12px;
+                padding: 12px 10px;
+                color: white;
+                text-decoration: none;
+                background: rgba(255,255,255,0.08);
+                border-radius: 8px;
+                font-size: 14px;
+                white-space: normal;
+                line-height: 1.3;
+                transition: 0.2s;
+            }
+
+                .menu-item:hover {
+                    background: rgba(255,255,255,0.18);
+                    transform: translateX(5px);
+                }
+
+            /* SUBMENU */
+            .submenu {
+                display: none;
+                margin-left: 10px;
+            }
+
+            .submenu-item {
+                display: block;
+                margin: 6px 15px;
+                padding: 10px;
+                background: rgba(255,255,255,0.06);
+                color: #ddd;
+                text-decoration: none;
+                border-radius: 6px;
+                font-size: 13px;
+                transition: 0.2s;
+            }
+
+                .submenu-item:hover {
+                    background: rgba(255,255,255,0.2);
+                    color: white;
+                }
+
+            /* TOPBAR */
+            .topbar {
+                height: 60px;
+                background: linear-gradient(90deg, #0d6efd, #0a58ca);
+                color: white;
+                margin-left: 240px;
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                padding: 0 20px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            }
+
+                .topbar .left {
+                    font-size: 18px;
+                    font-weight: bold;
+                }
+
+                .topbar .right {
+                    display: flex;
+                    align-items: center;
+                    gap: 15px;
+                }
+
+            .user {
+                background: rgba(255,255,255,0.15);
+                padding: 5px 10px;
+                border-radius: 8px;
+            }
+
+            .logout {
+                color: white;
+                text-decoration: none;
+                background: #dc3545;
+                padding: 5px 10px;
+                border-radius: 8px;
+            }
+
+                .logout:hover {
+                    background: #bb2d3b;
+                }
+
+            /* CONTENT */
+            .content {
+                margin-left: 240px;
+                padding: 20px;
+                background: #f1f5f9;
+                min-height: 100vh;
+            }
+
+            .card-box {
+                padding: 25px;
+                border-radius: 12px;
+                background: white;
+                box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+                transition: 0.2s;
+                cursor: pointer;
+                font-weight: 500;
+            }
+
+                .card-box:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+                }
+
+    </style>
+</head>
+
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+
+        <h5 class="text-center mb-4">Logo Rapor</h5>
+
+        <a class="menu-item" href="javascript:void(0)" onclick="cariGetir()"> 📊 Cari Ekstre</a>
+        <a class="menu-item" href="#">🧾 Satış Faturaları</a>
+        <a class="menu-item" href="#">📦 Satınalma Faturaları</a>
+
+        <a class="menu-item" href="javascript:void(0);" onclick="toggleMenu()">
+            💰 Mali Veriler ▾
+        </a>
+
+        <div id="financeSubMenu" class="submenu">
+
+            <a class="submenu-item" href="#">📅 İki Tarih Arası Mizan</a>
+            <a class="submenu-item" href="#">📈 Kar Zarar Tablosu</a>
+            <a class="submenu-item" href="#">📊 Bilanço</a>
+            <a class="submenu-item" href="#">📦 E-Envanter</a>
+
+        </div>
+
+        <a class="menu-item" href="/Home/Settings">⚙ Ayarlar</a>
+        <a class="menu-item" href="/Home/Login">🚪 Çıkış</a>
+
+    </div>
+
+    <!-- TOPBAR -->
+    <div class="topbar">
+
+        <div class="left">📊 Dashboard</div>
+
+        <div class="right">
+            <span class="user">👤 Admin</span>
+            <a class="logout" href="/Home/Login">Çıkış</a>
+        </div>
+
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+        <h3>Hoş Geldin</h3>
+
+        <div class="row mt-4" id="raporKartlari">
+
+            <div class="col-md-3 mb-3"><div class="card-box">📊 Cari Ekstre</div></div>
+            <div class="col-md-3 mb-3"><div class="card-box">🧾 Satış Faturaları</div></div>
+            <div class="col-md-3 mb-3"><div class="card-box">📦 Satınalma Faturaları</div></div>
+            <div class="col-md-3 mb-3"><div class="card-box">📅 Mizan</div></div>
+            <div class="col-md-3 mb-3"><div class="card-box">📈 Kar Zarar</div></div>
+            <div class="col-md-3 mb-3"><div class="card-box">📊 Bilanço</div></div>
+            <div class="col-md-3 mb-3"><div class="card-box">📦 Envanter</div></div>
+            <div id="cariListeAlani" style="margin-top:20px;"></div>
+
+        </div>
+
+    </div>
+
+    <script>
+            function toggleMenu() {
+                var menu = document.getElementById("financeSubMenu");
+                menu.style.display = (menu.style.display === "block") ? "none" : "block";
+            }
+
+                        function cariGetir() {
+
+                fetch('/Home/CariEkstre')
+                    .then(res => res.text())
+                    .then(data => {
+
+                        document.getElementById("cariListeAlani").innerHTML = data;
+
+                        // 🔥 kartları gizle
+                        document.getElementById("raporKartlari").style.display = "none";
+                    });
+            }
+    </script>
+
+
+</body>
+</html>
