@@ -8,27 +8,7 @@ namespace LogoRaporApp.Controllers
 {
     public class HomeController : Controller
     {
-        // ---------------- LOGIN ----------------
-
-        [HttpGet]
-        public IActionResult Login()
-        {
-            return View();
-        }
-
-        [HttpPost]
-        public IActionResult Login(string username, string password)
-        {
-            if (username == "admin" && password == "123")
-            {
-                HttpContext.Session.SetString("user", username);
-                return RedirectToAction("Settings");
-            }
-
-            ViewBag.Hata = "Kullanıcı adı veya şifre yanlış";
-            return View();
-        }
-
+        
         // ---------------- SETTINGS (GET) ----------------
 
         [HttpGet]
@@ -163,7 +143,7 @@ namespace LogoRaporApp.Controllers
         }
 
         //----------------CARI EKSTRE--------------
-        public IActionResult CariEkstre()
+        public IActionResult CariEkstre(string? arama)
         {
             if (HttpContext.Session.GetString("db") == null)
                 return Content("DB yok");
@@ -180,7 +160,8 @@ namespace LogoRaporApp.Controllers
 
             string firmStr = firm.Value.ToString("D3");
 
-            List<string> cariler = new List<string>();
+            List<CariListeItem> cariler = new List<CariListeItem>();
+
 
             try
             {
@@ -189,32 +170,39 @@ namespace LogoRaporApp.Controllers
                     con.Open();
 
                     string sql = $@"
-                SELECT CODE, DEFINITION_
-                FROM LG_{firmStr}_CLCARD
-                ORDER BY CODE
-            ";
+    SELECT CODE, DEFINITION_
+    FROM LG_{firmStr}_CLCARD
+    WHERE (@arama IS NULL OR @arama = '')
+       OR CODE LIKE '%' + @arama + '%'
+       OR DEFINITION_ LIKE '%' + @arama + '%'
+    ORDER BY CODE
+";
+
 
                     SqlCommand cmd = new SqlCommand(sql, con);
-
+                    cmd.Parameters.AddWithValue("@arama", (object?)arama ?? DBNull.Value);
                     SqlDataReader dr = cmd.ExecuteReader();
 
                     while (dr.Read())
-                    {
-                        cariler.Add(
-                            dr["CODE"].ToString() + " - " +
-                            dr["DEFINITION_"].ToString()
-                        );
-                    }
-                }
+{
+    cariler.Add(new CariListeItem
+    {
+        CariKod = dr["CODE"]?.ToString() ?? "",
+        Unvan = dr["DEFINITION_"]?.ToString() ?? "",
+        Bakiye = 0,
+        VknTckn = ""
+    });
+}
 
-                ViewBag.Cariler = cariler;
+
+                }
+                return View(cariler);
+
             }
             catch (Exception ex)
             {
                 return Content("HATA: " + ex.Message);
             }
-
-            return View();
         }
 
         // ---------------- DASHBOARD ----------------
