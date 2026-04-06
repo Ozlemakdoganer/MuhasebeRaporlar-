@@ -260,13 +260,36 @@ namespace LogoRaporApp.Controllers
         //---------DATABASE SETTINGS------------
 
         [HttpGet]
+        [HttpGet]
         public IActionResult DbSettings()
         {
             if (HttpContext.Session.GetString("user") == null)
                 return RedirectToAction("Login", "Account");
 
-            return View();
+            var model = new DbSetting();
+
+            var connStr = HttpContext.Session.GetString("db");
+
+            if (!string.IsNullOrEmpty(connStr))
+            {
+                var parts = connStr.Split(';', StringSplitOptions.RemoveEmptyEntries);
+
+                foreach (var part in parts)
+                {
+                    if (part.StartsWith("Server=", StringComparison.OrdinalIgnoreCase))
+                        model.Server = part.Substring("Server=".Length);
+
+                    if (part.StartsWith("Database=", StringComparison.OrdinalIgnoreCase))
+                        model.Database = part.Substring("Database=".Length);
+
+                    if (part.StartsWith("User Id=", StringComparison.OrdinalIgnoreCase))
+                        model.Username = part.Substring("User Id=".Length);
+                }
+            }
+
+            return View(model);
         }
+
         [HttpGet]
         //---------SATIS FATURALARI ACTION---------
         public IActionResult SatisFaturalari()

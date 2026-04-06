@@ -22,17 +22,17 @@
         <div class="row">
             <div class="col-md-6 mb-3">
                 <label class="form-label">SQL Server</label>
-                <input class="form-control" name="Server" placeholder="Örn: localhost" />
+                <input class="form-control" name="Server" value="@Model?.Server" placeholder="Örn: localhost" />
             </div>
 
             <div class="col-md-6 mb-3">
                 <label class="form-label">Veritabanı</label>
-                <input class="form-control" name="Database" placeholder="Veritabanı adı" />
+                <input class="form-control" name="Database" value="@Model?.Database" placeholder="Veritabanı adı" />
             </div>
 
             <div class="col-md-6 mb-3">
                 <label class="form-label">Kullanıcı Adı</label>
-                <input class="form-control" name="Username" placeholder="Kullanıcı adı" />
+                <input class="form-control" name="Username" value="@Model?.Username" placeholder="Kullanıcı adı" />
             </div>
 
             <div class="col-md-6 mb-3">
