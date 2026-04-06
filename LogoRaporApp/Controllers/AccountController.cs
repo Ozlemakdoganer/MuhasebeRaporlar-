@@ -17,7 +17,7 @@ namespace LogoRaporApp.Controllers
             if (username == "admin" && password == "123")
             {
                 HttpContext.Session.SetString("user", username);
-                return RedirectToAction("Settings", "Home");
+                return RedirectToAction("Dashboard", "Home");
             }
 
             ViewBag.Hata = "Kullanıcı adı veya şifre yanlış";

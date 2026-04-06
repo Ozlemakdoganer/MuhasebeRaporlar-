@@ -251,11 +251,11 @@
     white-space: nowrap;
 }
 
-
-
-
-
-
+.disabled-menu {
+    opacity: 0.45;
+    pointer-events: none;
+    cursor: not-allowed;
+}
 
     </style>
 </head>
@@ -272,10 +272,20 @@
 
 
     <div class="sidebar-menu">
-        <a class="menu-item" href="javascript:void(0)" onclick="cariGetir()">
-            <span>📊</span>
-            <span class="menu-text">Cari Ekstre</span>
-        </a>
+        @if (ViewBag.DbConnected == true)
+{
+    <a class="menu-item" href="javascript:void(0)" onclick="cariGetir()">
+        <span>📊</span>
+        <span class="menu-text">Cari Ekstre</span>
+    </a>
+}
+else
+{
+    <a class="menu-item disabled-menu" href="javascript:void(0)">
+        <span>📊</span>
+        <span class="menu-text">Cari Ekstre</span>
+    </a>
+}
 
         <a class="menu-item" href="#">
             <span>🧾</span>
@@ -299,7 +309,7 @@
             <a class="submenu-item" href="#">📦 E-Envanter</a>
         </div>
 
-        <a class="menu-item" href="/Home/Settings">
+        <a class="menu-item" href="javascript:void(0)" onclick="ayarlarGetir()">
             <span>⚙</span>
             <span class="menu-text">Ayarlar</span>
         </a>
@@ -407,8 +417,46 @@
     }
 }
 
+function ayarlarGetir() {
+    fetch('/Home/Settings')
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById("welcomeArea").style.display = "none";
+            document.getElementById("reportArea").style.display = "block";
+            document.getElementById("reportArea").innerHTML = data;
+            document.getElementById("pageTitle").innerText = "Ayarlar";
+        });
+}
 
+function veritabaniAyarlariGetir() {
+    fetch('/Home/DbSettings')
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById("welcomeArea").style.display = "none";
+            document.getElementById("reportArea").style.display = "block";
+            document.getElementById("reportArea").innerHTML = data;
+            document.getElementById("pageTitle").innerText = "Veritabanı Ayarları";
+        });
 
+        document.addEventListener("submit", function (e) {
+    if (e.target && e.target.id === "dbSettingsForm") {
+        e.preventDefault();
+
+        const form = e.target;
+        const formData = new FormData(form);
+
+        fetch('/Home/SaveDbSettings', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById("reportArea").innerHTML = data;
+        });
+    }
+});
+
+       }
      </script>
 
 

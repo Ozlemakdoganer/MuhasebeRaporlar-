@@ -22,12 +22,38 @@ namespace LogoRaporApp.Controllers
 
         // ---------------- SETTINGS (POST) ----------------
 
+        /* [HttpPost]
+         public IActionResult Settings(DbSetting model)
+         {
+             if (HttpContext.Session.GetString("user") == null)
+                 return RedirectToAction("Login");
+
+
+             string connStr =
+                 $"Server={model.Server};Database={model.Database};User Id={model.Username};Password={model.Password};TrustServerCertificate=True;";
+
+             try
+             {
+                 using (var conn = new SqlConnection(connStr))
+                 {
+                     conn.Open();
+                 }
+
+                 HttpContext.Session.SetString("db", connStr);
+                 TempData["Success"] = "Veritabanı bağlantısı başarıyla kaydedildi.";
+                 return RedirectToAction("Dashboard");
+             }
+             catch (Exception)
+             {
+                 ViewBag.Error = "Bağlantı başarısız. Girdiğiniz veritabanı bilgilerini kontrol edip tekrar deneyin.";
+                 return View("DbSettings");
+             }
+         }*/
         [HttpPost]
-        public IActionResult Settings(DbSetting model)
+        public IActionResult SaveDbSettings(DbSetting model)
         {
             if (HttpContext.Session.GetString("user") == null)
-                return RedirectToAction("Login");
-
+                return Content("LOGIN");
 
             string connStr =
                 $"Server={model.Server};Database={model.Database};User Id={model.Username};Password={model.Password};TrustServerCertificate=True;";
@@ -41,14 +67,16 @@ namespace LogoRaporApp.Controllers
 
                 HttpContext.Session.SetString("db", connStr);
 
-                return RedirectToAction("SelectCompany");
+                return Content("SUCCESS");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                ViewBag.Error = "Veritabanı bağlantısı başarısız: " + ex.Message;
-                return View();
+                ViewBag.Error = "Bağlantı başarısız. Girdiğiniz veritabanı bilgilerini kontrol edip tekrar deneyin.";
+                return View("DbSettings");
             }
         }
+
+
 
         // ---------------- SELECT COMPANY ----------------
 
@@ -209,15 +237,25 @@ namespace LogoRaporApp.Controllers
 
         public IActionResult Dashboard()
         {
-            // 🔐 login kontrol
             if (HttpContext.Session.GetString("user") == null)
-                return RedirectToAction("Login");
+                return RedirectToAction("Login", "Account");
 
-            // 🏢 firma seçilmiş mi
-            if (HttpContext.Session.GetInt32("firm") == null)
-                return RedirectToAction("SelectCompany");
+            ViewBag.DbConnected = !string.IsNullOrEmpty(HttpContext.Session.GetString("db"));
 
             return View();
         }
+
+        //---------DATABASE SETTINGS------------
+
+        [HttpGet]
+        public IActionResult DbSettings()
+        {
+            if (HttpContext.Session.GetString("user") == null)
+                return RedirectToAction("Login", "Account");
+
+            return View();
+        }
+
+
     }
 }
