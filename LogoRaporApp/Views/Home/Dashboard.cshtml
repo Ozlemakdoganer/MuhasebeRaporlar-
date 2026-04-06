@@ -272,35 +272,69 @@
 
 
     <div class="sidebar-menu">
-        @if (ViewBag.DbConnected == true)
+       @if (ViewBag.CanUseReports == true)
 {
     <a class="menu-item" href="javascript:void(0)" onclick="cariGetir()">
         <span>📊</span>
-        <span class="menu-text">Cari Ekstre</span>
+        <span class="menu-text">Cari Hesap Raporları</span>
     </a>
 }
 else
 {
     <a class="menu-item disabled-menu" href="javascript:void(0)">
         <span>📊</span>
-        <span class="menu-text">Cari Ekstre</span>
+        <span class="menu-text">Cari Hesap Raporları</span>
     </a>
 }
 
-        <a class="menu-item" href="#">
-            <span>🧾</span>
-            <span class="menu-text">Satış Faturaları</span>
-        </a>
 
-        <a class="menu-item" href="#">
-            <span>📦</span>
-            <span class="menu-text">Satınalma Faturaları</span>
-        </a>
+        @if (ViewBag.CanUseReports == true)
+{
+    <a class="menu-item" href="javascript:void(0)">
+        <span>🧾</span>
+        <span class="menu-text">Satış Faturaları Dökümü</span>
+    </a>
+}
+else
+{
+    <a class="menu-item disabled-menu" href="javascript:void(0)">
+        <span>🧾</span>
+        <span class="menu-text">Satış Faturaları Dökümü</span>
+    </a>
+}
 
-        <a class="menu-item" href="javascript:void(0);" onclick="toggleMenu()">
-            <span>💰</span>
-            <span class="menu-text">Mali Veriler ▾</span>
-        </a>
+
+        @if (ViewBag.CanUseReports == true)
+{
+    <a class="menu-item" href="javascript:void(0)">
+        <span>📦</span>
+        <span class="menu-text">Satınalma Faturaları Dökümü</span>
+    </a>
+}
+else
+{
+    <a class="menu-item disabled-menu" href="javascript:void(0)">
+        <span>📦</span>
+        <span class="menu-text">Satınalma Faturaları Dökümü</span>
+    </a>
+}
+
+
+        @if (ViewBag.CanUseReports == true)
+{
+    <a class="menu-item" href="javascript:void(0);" onclick="toggleMenu()">
+        <span>💰</span>
+        <span class="menu-text">Mali Veriler ▾</span>
+    </a>
+}
+else
+{
+    <a class="menu-item disabled-menu" href="javascript:void(0)">
+        <span>💰</span>
+        <span class="menu-text">Mali Veriler ▾</span>
+    </a>
+}
+
 
         <div id="financeSubMenu" class="submenu">
             <a class="submenu-item" href="#">📅 İki Tarih Arası Mizan</a>
@@ -457,6 +491,37 @@ function veritabaniAyarlariGetir() {
 });
 
        }
+
+       function firmaSecimGetir() {
+    fetch('/Home/SelectCompany')
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById("welcomeArea").style.display = "none";
+            document.getElementById("reportArea").style.display = "block";
+            document.getElementById("reportArea").innerHTML = data;
+            document.getElementById("pageTitle").innerText = "Firma / Dönem Seçimi";
+        });
+}
+
+function firmaDegisti() {
+    var select = document.getElementById("firmaSelect");
+    var firma = select.value;
+
+    fetch('/Home/GetPeriods?firmNr=' + firma)
+        .then(res => res.json())
+        .then(data => {
+            var select2 = document.getElementById("donemSelect");
+            select2.innerHTML = "";
+
+            data.forEach(function (item) {
+                var opt = document.createElement("option");
+                opt.value = item.periodNr;
+                opt.text = item.periodNr;
+                select2.appendChild(opt);
+            });
+        });
+}
+
      </script>
 
 

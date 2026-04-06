@@ -67,7 +67,14 @@ namespace LogoRaporApp.Controllers
 
                 HttpContext.Session.SetString("db", connStr);
 
-                return Content("SUCCESS");
+                return Content(@"
+    <div class='alert alert-success'>
+        Veritabanı bağlantısı başarıyla kaydedildi.
+    </div>
+    <button type='button' class='btn btn-primary' onclick='firmaSecimGetir()'>
+        Firma / Dönem Seçimine Git
+    </button>
+");
             }
             catch (Exception)
             {
@@ -241,9 +248,14 @@ namespace LogoRaporApp.Controllers
                 return RedirectToAction("Login", "Account");
 
             ViewBag.DbConnected = !string.IsNullOrEmpty(HttpContext.Session.GetString("db"));
+            ViewBag.CanUseReports =
+                !string.IsNullOrEmpty(HttpContext.Session.GetString("db")) &&
+                HttpContext.Session.GetInt32("firm") != null &&
+                HttpContext.Session.GetInt32("period") != null;
 
             return View();
         }
+
 
         //---------DATABASE SETTINGS------------
 
@@ -252,6 +264,21 @@ namespace LogoRaporApp.Controllers
         {
             if (HttpContext.Session.GetString("user") == null)
                 return RedirectToAction("Login", "Account");
+
+            return View();
+        }
+        [HttpGet]
+        //---------SATIS FATURALARI ACTION---------
+        public IActionResult SatisFaturalari()
+        {
+            if (HttpContext.Session.GetString("db") == null)
+                return Content("DB bağlantısı bulunamadı.");
+
+            var firm = HttpContext.Session.GetInt32("firm");
+            var period = HttpContext.Session.GetInt32("period");
+
+            if (firm == null || period == null)
+                return Content("Firma / dönem seçimi yapılmamış.");
 
             return View();
         }
