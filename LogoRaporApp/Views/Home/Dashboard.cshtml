@@ -257,6 +257,10 @@
     cursor: not-allowed;
 }
 
+#footerInfo.collapsed {
+    left: 70px;
+}
+
     </style>
 </head>
 
@@ -357,6 +361,8 @@ else
     <div class="sidebar-toggle-area">
        <button type="button" id="toggleBtn" class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Menüyü Daralt / Genişlet">
     ❮
+
+    
 </button>
 
 
@@ -418,111 +424,185 @@ else
 
 
     <script>
-            function toggleMenu() {
-                var menu = document.getElementById("financeSubMenu");
-                menu.style.display = (menu.style.display === "block") ? "none" : "block";
-            }   
-            
-            function cariGetir() {
-                fetch('/Home/CariEkstre')
-                    .then(res => res.text())
-                    .then(data => {
-                        document.getElementById("welcomeArea").style.display = "none";
-                        document.getElementById("reportArea").style.display = "block";
-                        document.getElementById("reportArea").innerHTML = data;
-                        document.getElementById("pageTitle").innerText = "Cari Hesap Raporları";
-                    });
-            }
-
-            function toggleSidebar() {
-    const sidebar = document.querySelector(".sidebar");
-    const topbar = document.querySelector(".topbar");
-    const content = document.querySelector(".content");
-    const toggleBtn = document.getElementById("toggleBtn");
-
-    sidebar.classList.toggle("collapsed");
-    topbar.classList.toggle("collapsed");
-    content.classList.toggle("collapsed");
-
-    if (sidebar.classList.contains("collapsed")) {
-        toggleBtn.innerHTML = "❯";
-    } else {
-        toggleBtn.innerHTML = "❮";
+    function toggleMenu() {
+        var menu = document.getElementById("financeSubMenu");
+        menu.style.display = (menu.style.display === "block") ? "none" : "block";
     }
-}
 
-function ayarlarGetir() {
-    fetch('/Home/Settings')
-        .then(res => res.text())
-        .then(data => {
-            document.getElementById("welcomeArea").style.display = "none";
-            document.getElementById("reportArea").style.display = "block";
-            document.getElementById("reportArea").innerHTML = data;
-            document.getElementById("pageTitle").innerText = "Ayarlar";
-        });
-}
+    function cariGetir() {
+        fetch('/Home/CariEkstre')
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("welcomeArea").style.display = "none";
+                document.getElementById("reportArea").style.display = "block";
+                document.getElementById("reportArea").innerHTML = data;
+                document.getElementById("pageTitle").innerText = "Cari Hesap Raporları";
+            });
+    }
 
-function veritabaniAyarlariGetir() {
-    fetch('/Home/DbSettings')
-        .then(res => res.text())
-        .then(data => {
-            document.getElementById("welcomeArea").style.display = "none";
-            document.getElementById("reportArea").style.display = "block";
-            document.getElementById("reportArea").innerHTML = data;
-            document.getElementById("pageTitle").innerText = "Veritabanı Ayarları";
-        });
+    function toggleSidebar() {
+        const sidebar = document.querySelector(".sidebar");
+        const topbar = document.querySelector(".topbar");
+        const content = document.querySelector(".content");
+        const toggleBtn = document.getElementById("toggleBtn");
 
-        document.addEventListener("submit", function (e) {
-    if (e.target && e.target.id === "dbSettingsForm") {
-        e.preventDefault();
+        sidebar.classList.toggle("collapsed");
+        topbar.classList.toggle("collapsed");
+        content.classList.toggle("collapsed");
 
-        const form = e.target;
-        const formData = new FormData(form);
+        if (sidebar.classList.contains("collapsed")) {
+            toggleBtn.innerHTML = "❯";
+        } else {
+            toggleBtn.innerHTML = "❮";
+        }
+    }
 
-        fetch('/Home/SaveDbSettings', {
-            method: 'POST',
-            body: formData
-        })
-        .then(res => res.text())
-        .then(data => {
-            document.getElementById("reportArea").innerHTML = data;
-        });
+    function ayarlarGetir() {
+        fetch('/Home/Settings')
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("welcomeArea").style.display = "none";
+                document.getElementById("reportArea").style.display = "block";
+                document.getElementById("reportArea").innerHTML = data;
+                document.getElementById("pageTitle").innerText = "Ayarlar";
+            });
+    }
+
+    function veritabaniAyarlariGetir() {
+        fetch('/Home/DbSettings')
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("welcomeArea").style.display = "none";
+                document.getElementById("reportArea").style.display = "block";
+                document.getElementById("reportArea").innerHTML = data;
+                document.getElementById("pageTitle").innerText = "Veritabanı Ayarları";
+            });
+    }
+
+    function firmaSecimGetir() {
+        fetch('/Home/SelectCompany')
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("welcomeArea").style.display = "none";
+                document.getElementById("reportArea").style.display = "block";
+                document.getElementById("reportArea").innerHTML = data;
+                document.getElementById("pageTitle").innerText = "Firma / Dönem Seçimi";
+
+                setTimeout(function () {
+                    firmaSecimiHazirla();
+                }, 100);
+            });
+    }
+
+    function firmaDegisti(selectedPeriod = null) {
+        var select = document.getElementById("firmaSelect");
+        var firma = select.value;
+
+        fetch('/Home/GetPeriods?firmNr=' + firma)
+            .then(res => res.json())
+            .then(data => {
+    var select2 = document.getElementById("donemSelect");
+    select2.innerHTML = "";
+
+    var defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.text = "Dönem seçiniz";
+    select2.appendChild(defaultOption);
+
+    data.forEach(function (item) {
+        var opt = document.createElement("option");
+        opt.value = item.periodNr;
+        opt.text = item.periodNr + " (" + item.begDate + " - " + item.endDate + ")";
+        select2.appendChild(opt);
+    });
+
+    if (selectedPeriod != null) {
+        select2.value = selectedPeriod.toString();
     }
 });
 
-       }
+    }
 
-       function firmaSecimGetir() {
-    fetch('/Home/SelectCompany')
-        .then(res => res.text())
-        .then(data => {
-            document.getElementById("welcomeArea").style.display = "none";
-            document.getElementById("reportArea").style.display = "block";
-            document.getElementById("reportArea").innerHTML = data;
-            document.getElementById("pageTitle").innerText = "Firma / Dönem Seçimi";
-        });
-}
+    function firmaSecimiHazirla() {
+        var selectedFirmInput = document.getElementById("selectedFirmValue");
+        var selectedPeriodInput = document.getElementById("selectedPeriodValue");
+        var firmaSelect = document.getElementById("firmaSelect");
 
-function firmaDegisti() {
-    var select = document.getElementById("firmaSelect");
-    var firma = select.value;
+        if (selectedFirmInput && selectedPeriodInput && firmaSelect) {
+            var selectedFirm = selectedFirmInput.value;
+            var selectedPeriod = selectedPeriodInput.value;
+              if (selectedFirm) {
+                firmaSelect.value = selectedFirm;
+                firmaDegisti(selectedPeriod);
+            }
+        }
+    }
 
-    fetch('/Home/GetPeriods?firmNr=' + firma)
+    document.addEventListener("submit", function (e) {
+        if (e.target && e.target.id === "dbSettingsForm") {
+            e.preventDefault();
+
+            const form = e.target;
+            const formData = new FormData(form);
+
+            fetch('/Home/SaveDbSettings', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.text())
+            .then(data => {
+                document.getElementById("reportArea").innerHTML = data;
+            });
+        }
+    });
+
+    function footerBilgiYukle() {
+
+    fetch('/Home/GetSessionInfo')
         .then(res => res.json())
         .then(data => {
-            var select2 = document.getElementById("donemSelect");
-            select2.innerHTML = "";
 
-            data.forEach(function (item) {
-                var opt = document.createElement("option");
-                opt.value = item.periodNr;
-                opt.text = item.periodNr;
-                select2.appendChild(opt);
-            });
+            if (!data || !data.firmNr) return;
+
+            const text =
+                data.firmNr + " - " + data.firmaAdi +
+                " | " +
+                data.periodNr + " (" + data.begDate + " - " + data.endDate + ")";
+
+            document.getElementById("footerText").innerText = text;
+
         });
 }
 
-     </script>
+// sayfa açılınca
+footerBilgiYukle();
+
+</script>
+<div id="footerInfo" style="
+    position: fixed;
+    bottom: 0;
+    left: 240px;
+    right: 0;
+    height: 45px;
+    background: linear-gradient(90deg, #0f172a, #1e293b);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    border-top: 1px solid #334155;
+    z-index: 999;
+">
+
+    <span id="footerText" style="
+        background: rgba(255,255,255,0.08);
+        padding: 6px 14px;
+        border-radius: 8px;
+    ">
+        Yükleniyor...
+    </span>
+
+</div>
 
 
 </body>

@@ -118,8 +118,13 @@ namespace LogoRaporApp.Controllers
                     }
                 }
 
+               
                 ViewBag.Firmalar = firmalar;
+                ViewBag.SelectedFirm = HttpContext.Session.GetInt32("firm");
+                ViewBag.SelectedPeriod = HttpContext.Session.GetInt32("period");
+
                 return View();
+               
             }
             catch (Exception ex)
             {
@@ -143,7 +148,7 @@ namespace LogoRaporApp.Controllers
                     con.Open();
 
                     SqlCommand cmd = new SqlCommand(
-                        "SELECT NR FROM L_CAPIPERIOD WHERE FIRMNR = @firmNr",
+                        "SELECT NR, BEGDATE, ENDDATE \r\nFROM L_CAPIPERIOD \r\nWHERE FIRMNR = @firmNr",
                         con);
 
                     cmd.Parameters.AddWithValue("@firmNr", firmNr);
@@ -154,7 +159,9 @@ namespace LogoRaporApp.Controllers
                     {
                         donemler.Add(new
                         {
-                            periodNr = dr["NR"]
+                            periodNr = dr["NR"],
+                            begDate = Convert.ToDateTime(dr["BEGDATE"]).ToString("dd.MM.yyyy"),
+                            endDate = Convert.ToDateTime(dr["ENDDATE"]).ToString("dd.MM.yyyy")
                         });
                     }
                 }
@@ -306,6 +313,63 @@ namespace LogoRaporApp.Controllers
             return View();
         }
 
+        //--------sayfalarda firma-dönem bilgi çek-----------------
+        public JsonResult GetSessionInfo()
+        {
+            var connStr = HttpContext.Session.GetString("db");
+
+            var firm = HttpContext.Session.GetInt32("firm");
+            var period = HttpContext.Session.GetInt32("period");
+
+            if (string.IsNullOrEmpty(connStr) || firm == null || period == null)
+            {
+                return Json(new { });
+            }
+
+            string firmStr = firm.Value.ToString("D3");
+
+            string firmaAdi = "";
+            string begDate = "";
+            string endDate = "";
+
+            using (SqlConnection con = new SqlConnection(connStr))
+            {
+                con.Open();
+
+                // 🔹 Firma adı
+                SqlCommand cmd1 = new SqlCommand(
+                    "SELECT NAME FROM L_CAPIFIRM WHERE NR = @nr", con);
+
+                cmd1.Parameters.AddWithValue("@nr", firm.Value);
+
+                var result1 = cmd1.ExecuteScalar();
+                firmaAdi = Convert.ToString(result1) ?? "";
+
+                // 🔹 Dönem tarihleri
+                SqlCommand cmd2 = new SqlCommand(
+                    "SELECT BEGDATE, ENDDATE FROM L_CAPIPERIOD WHERE FIRMNR=@f AND NR=@p", con);
+
+                cmd2.Parameters.AddWithValue("@f", firm.Value);
+                cmd2.Parameters.AddWithValue("@p", period.Value);
+
+                var dr = cmd2.ExecuteReader();
+
+                if (dr.Read())
+                {
+                    begDate = Convert.ToDateTime(dr["BEGDATE"]).ToString("dd.MM.yyyy");
+                    endDate = Convert.ToDateTime(dr["ENDDATE"]).ToString("dd.MM.yyyy");
+                }
+            }
+
+            return Json(new
+            {
+                firmNr = firm.Value.ToString("D3"),
+                firmaAdi,
+                periodNr = period.Value.ToString("D2"),
+                begDate,
+                endDate
+            });
+        }
 
     }
 }

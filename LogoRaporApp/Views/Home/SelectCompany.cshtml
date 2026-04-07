@@ -16,8 +16,16 @@
 
                         @foreach (var f in ViewBag.Firmalar)
                         {
-                            <option value="@f.Nr">@f.Nr - @f.Name</option>
+                            if (ViewBag.SelectedFirm != null && ViewBag.SelectedFirm == f.Nr)
+                            {
+                                <option value="@f.Nr" selected>@f.Nr - @f.Name</option>
+                            }
+                            else
+                            {
+                                <option value="@f.Nr">@f.Nr - @f.Name</option>
+                            }
                         }
+
                     </select>
                 </div>
 
@@ -27,9 +35,13 @@
                         <option value="">Önce firma seçiniz</option>
                     </select>
                 </div>
+                <input type="hidden" id="selectedFirmValue" value="@ViewBag.SelectedFirm" />
+                <input type="hidden" id="selectedPeriodValue" value="@ViewBag.SelectedPeriod" />
+
 
                 <button type="submit" class="btn btn-primary w-100">Devam Et</button>
             </form>
         </div>
     </div>
 </div>
+
