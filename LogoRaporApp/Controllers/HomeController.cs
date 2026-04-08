@@ -8,7 +8,9 @@ namespace LogoRaporApp.Controllers
 {
     public class HomeController : Controller
     {
-        
+
+
+
         // ---------------- SETTINGS (GET) ----------------
 
         [HttpGet]
@@ -17,8 +19,17 @@ namespace LogoRaporApp.Controllers
             if (HttpContext.Session.GetString("user") == null)
                 return RedirectToAction("Login");
 
+            ViewBag.DbConnected = !string.IsNullOrEmpty(HttpContext.Session.GetString("db"));
+            ViewBag.SelectedFirm = HttpContext.Session.GetInt32("firm");
+            ViewBag.SelectedPeriod = HttpContext.Session.GetInt32("period");
+            ViewBag.NeedFirmSelection =
+                !string.IsNullOrEmpty(HttpContext.Session.GetString("db")) &&
+                (HttpContext.Session.GetInt32("firm") == null || HttpContext.Session.GetInt32("period") == null);
+
             return View();
         }
+
+
 
         // ---------------- SETTINGS (POST) ----------------
 
@@ -66,15 +77,18 @@ namespace LogoRaporApp.Controllers
                 }
 
                 HttpContext.Session.SetString("db", connStr);
+                HttpContext.Session.Remove("firm");
+                HttpContext.Session.Remove("period");
 
-                return Content(@"
-    <div class='alert alert-success'>
-        Veritabanı bağlantısı başarıyla kaydedildi.
-    </div>
-    <button type='button' class='btn btn-primary' onclick='firmaSecimGetir()'>
-        Firma / Dönem Seçimine Git
-    </button>
-");
+
+                if (HttpContext.Session.GetInt32("firm") == null || HttpContext.Session.GetInt32("period") == null)
+                {
+                    return Content("SUCCESS_FIRST");
+                }
+
+                return Content("SUCCESS_UPDATE");
+
+
             }
             catch (Exception)
             {
@@ -176,6 +190,7 @@ namespace LogoRaporApp.Controllers
         //----------FIRMA+DONEM SECIMI SONRASI-----------------
 
         [HttpPost]
+        [HttpPost]
         public IActionResult SelectCompany(int firmNr, int periodNr)
         {
             HttpContext.Session.SetInt32("firm", firmNr);
@@ -183,6 +198,7 @@ namespace LogoRaporApp.Controllers
 
             return RedirectToAction("Dashboard");
         }
+
 
         //----------------CARI EKSTRE--------------
         public IActionResult CariEkstre(string? arama)

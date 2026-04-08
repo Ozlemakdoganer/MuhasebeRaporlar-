@@ -27,8 +27,12 @@ namespace LogoRaporApp.Controllers
         [HttpGet]
         public IActionResult Logout()
         {
-            HttpContext.Session.Clear();
+            HttpContext.Session.Remove("user");
+            HttpContext.Session.Remove("firm");
+            HttpContext.Session.Remove("period");
+
             return RedirectToAction("Login", "Account");
         }
+
     }
 }

@@ -12,9 +12,10 @@
 
     <style>
             body {
-                margin: 0;
-                font-family: Arial;
-            }
+    margin: 0;
+    font-family: Arial;
+    background: #f1f5f9; /* 👈 önemli */
+}
 
             /* SIDEBAR - GÜNCELLENDİ (ANA TEMA) */
             .sidebar {
@@ -169,11 +170,13 @@
 
             /* CONTENT */
             .content {
-                margin-left: 240px;
-                padding: 20px;
-                background: #f1f5f9;
-                min-height: 100vh;
-            }
+    margin-left: 240px;
+    padding: 20px;
+    background: #f1f5f9;
+    min-height: calc(100vh - 60px);
+    box-sizing: border-box;
+}
+
             .content.collapsed {
                 margin-left: 70px;
             }
@@ -260,6 +263,28 @@
 #footerInfo.collapsed {
     left: 70px;
 }
+
+#footerInfo {
+    position: fixed;
+    bottom: 0;
+    left: 240px;
+    right: 0;
+    height: 45px;
+    background: linear-gradient(90deg, #0f172a, #1e293b);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    border-top: 1px solid #334155;
+    z-index: 999;
+    transition: left 0.2s ease;
+}
+
+#footerInfo.collapsed {
+    left: 70px;
+}
+
 
     </style>
 </head>
@@ -380,9 +405,11 @@ else
 
 
         <div class="right">
-            <span class="user">👤 Admin</span>
-            <a class="logout" href="/Account/Logout">Çıkış</a>
-        </div>
+    <button type="button" class="btn btn-warning btn-sm" onclick="firmaSecimGetir()">Firma / Dönem Seç</button>
+    <span class="user">👤 Admin</span>
+    <a class="logout" href="/Account/Logout">Çıkış</a>
+</div>
+
 
     </div>
 
@@ -441,21 +468,28 @@ else
     }
 
     function toggleSidebar() {
-        const sidebar = document.querySelector(".sidebar");
-        const topbar = document.querySelector(".topbar");
-        const content = document.querySelector(".content");
-        const toggleBtn = document.getElementById("toggleBtn");
+    const sidebar = document.querySelector(".sidebar");
+    const topbar = document.querySelector(".topbar");
+    const content = document.querySelector(".content");
+    const footer = document.getElementById("footerInfo");
+    const toggleBtn = document.getElementById("toggleBtn");
 
-        sidebar.classList.toggle("collapsed");
-        topbar.classList.toggle("collapsed");
-        content.classList.toggle("collapsed");
+    sidebar.classList.toggle("collapsed");
+    topbar.classList.toggle("collapsed");
+    content.classList.toggle("collapsed");
 
-        if (sidebar.classList.contains("collapsed")) {
-            toggleBtn.innerHTML = "❯";
-        } else {
-            toggleBtn.innerHTML = "❮";
-        }
+    if (footer) {
+        footer.classList.toggle("collapsed");
     }
+
+    if (sidebar.classList.contains("collapsed")) {
+        toggleBtn.innerHTML = "❯";
+    } else {
+        toggleBtn.innerHTML = "❮";
+    }
+}
+
+
 
     function ayarlarGetir() {
         fetch('/Home/Settings')
@@ -495,33 +529,52 @@ else
     }
 
     function firmaDegisti(selectedPeriod = null) {
-        var select = document.getElementById("firmaSelect");
-        var firma = select.value;
+    var select = document.getElementById("firmaSelect");
+    var firma = select.value;
 
-        fetch('/Home/GetPeriods?firmNr=' + firma)
-            .then(res => res.json())
-            .then(data => {
-    var select2 = document.getElementById("donemSelect");
-    select2.innerHTML = "";
+    fetch('/Home/GetPeriods?firmNr=' + firma)
+        .then(res => res.json())
+        .then(data => {
+    var alan = document.getElementById("donemListesi");
+    var hiddenInput = document.getElementById("selectedPeriodHidden");
 
-    var defaultOption = document.createElement("option");
-    defaultOption.value = "";
-    defaultOption.text = "Dönem seçiniz";
-    select2.appendChild(defaultOption);
+    alan.innerHTML = "";
+    hiddenInput.value = "";
 
-    data.forEach(function (item) {
-        var opt = document.createElement("option");
-        opt.value = item.periodNr;
-        opt.text = item.periodNr + " (" + item.begDate + " - " + item.endDate + ")";
-        select2.appendChild(opt);
-    });
-
-    if (selectedPeriod != null) {
-        select2.value = selectedPeriod.toString();
+    if (!data || data.length === 0) {
+        alan.innerHTML = "<span class='text-muted'>Bu firmaya ait dönem bulunamadı</span>";
+        return;
     }
-});
 
-    }
+
+            data.forEach(function (item) {
+                var btn = document.createElement("button");
+                btn.type = "button";
+                btn.className = "btn btn-outline-primary btn-sm";
+                btn.innerText = item.periodNr + " (" + item.begDate + " - " + item.endDate + ")";
+
+                btn.onclick = function () {
+                    hiddenInput.value = item.periodNr;
+
+                    document.querySelectorAll("#donemListesi button").forEach(function (b) {
+                        b.classList.remove("btn-primary");
+                        b.classList.remove("text-white");
+                        b.classList.add("btn-outline-primary");
+                    });
+
+                    btn.classList.remove("btn-outline-primary");
+                    btn.classList.add("btn-primary", "text-white");
+                };
+
+                alan.appendChild(btn);
+
+                if (selectedPeriod != null && selectedPeriod.toString() === item.periodNr.toString()) {
+                    btn.click();
+                }
+            });
+        });
+}
+
 
     function firmaSecimiHazirla() {
         var selectedFirmInput = document.getElementById("selectedFirmValue");
@@ -539,22 +592,62 @@ else
     }
 
     document.addEventListener("submit", function (e) {
-        if (e.target && e.target.id === "dbSettingsForm") {
-            e.preventDefault();
 
-            const form = e.target;
-            const formData = new FormData(form);
+    if (e.target && e.target.id === "dbSettingsForm") {
+        e.preventDefault();
 
-            fetch('/Home/SaveDbSettings', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.text())
-            .then(data => {
+        const form = e.target;
+        const formData = new FormData(form);
+
+        fetch('/Home/SaveDbSettings', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.text())
+        .then(data => {
+            const sonuc = data.trim();
+
+            if (sonuc === "SUCCESS_FIRST") {
+                firmaSecimGetir();
+            }
+            else if (sonuc === "SUCCESS_UPDATE") {
+                ayarlarGetir();
+                document.getElementById("pageTitle").innerText = "Ayarlar";
+            }
+            else {
                 document.getElementById("reportArea").innerHTML = data;
-            });
+                document.getElementById("pageTitle").innerText = "Veritabanı Ayarları";
+            }
+        });
+    }
+
+    if (e.target && e.target.id === "selectCompanyForm") {
+        e.preventDefault();
+
+        const selectedPeriod = document.getElementById("selectedPeriodHidden");
+
+        if (!selectedPeriod || selectedPeriod.value === "") {
+            alert("Lütfen bir dönem seçiniz.");
+            return;
         }
-    });
+
+        const form = e.target;
+        const formData = new FormData(form);
+
+        fetch('/Home/SelectCompany', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.text())
+        .then(() => {
+            footerBilgiYukle();
+            location.reload();
+        });
+    }
+
+});
+
+
 
     function footerBilgiYukle() {
 
@@ -578,21 +671,8 @@ else
 footerBilgiYukle();
 
 </script>
-<div id="footerInfo" style="
-    position: fixed;
-    bottom: 0;
-    left: 240px;
-    right: 0;
-    height: 45px;
-    background: linear-gradient(90deg, #0f172a, #1e293b);
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 13px;
-    border-top: 1px solid #334155;
-    z-index: 999;
-">
+<div id="footerInfo">
+
 
     <span id="footerText" style="
         background: rgba(255,255,255,0.08);

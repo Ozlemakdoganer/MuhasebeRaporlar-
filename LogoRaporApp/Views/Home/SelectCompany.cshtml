@@ -4,14 +4,17 @@
 
 <div style="max-width:500px;">
     <h4 class="mb-3">Firma & Dönem Seçimi</h4>
+    <p class="text-muted mb-4">
+        Önce firmayı seçin, ardından ilgili dönemi belirleyin.
+    </p>
 
     <div class="card">
         <div class="card-body">
             <form method="post" asp-action="SelectCompany">
 
                 <div class="mb-3">
-                    <label class="form-label">Firma</label>
-                    <select id="firmaSelect" name="firmNr" class="form-select" onchange="firmaDegisti()">
+                    <label class="form-label fw-semibold">Firma Listesi</label>
+                    <select id="firmaSelect" name="firmNr" class="form-select" size="8" onchange="firmaDegisti()">
                         <option value="">Seçiniz</option>
 
                         @foreach (var f in ViewBag.Firmalar)
@@ -30,16 +33,26 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label">Dönem</label>
-                    <select id="donemSelect" name="periodNr" class="form-select">
-                        <option value="">Önce firma seçiniz</option>
-                    </select>
+                    <label class="form-label fw-semibold">Dönemler</label>
+                    <div id="donemListesi" class="d-flex flex-wrap gap-2">
+                        <span class="text-muted">Önce firma seçiniz</span>
+                    </div>
                 </div>
+
+                <input type="hidden" id="selectedPeriodHidden" name="periodNr" />
                 <input type="hidden" id="selectedFirmValue" value="@ViewBag.SelectedFirm" />
                 <input type="hidden" id="selectedPeriodValue" value="@ViewBag.SelectedPeriod" />
 
 
-                <button type="submit" class="btn btn-primary w-100">Devam Et</button>
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <button type="submit" class="btn btn-primary w-100">Seç</button>
+                    </div>
+                    <div class="col-6">
+                        
+                        <button type="button" class="btn btn-outline-secondary" onclick="ayarlarGetir()">Geri</button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>

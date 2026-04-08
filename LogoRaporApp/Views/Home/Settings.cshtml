@@ -1,6 +1,14 @@
 ﻿@{
     Layout = null;
 }
+@if (ViewBag.NeedFirmSelection == true)
+{
+    <div class="alert alert-warning mb-4">
+        Firma / dönem seçimi henüz yapılmamış. Raporları kullanabilmek için seçim yapmanız gerekiyor.
+    </div>
+}
+
+
 
 <div>
     <h4 class="mb-3">Ayarlar</h4>
@@ -16,6 +24,15 @@
                     <h5 class="card-title">Veritabanı Ayarları</h5>
                     <p class="card-text text-muted">
                         SQL bağlantı bilgilerini buradan tanımlayın.
+                        @if (ViewBag.DbConnected == true)
+                        {
+                            <div class="text-success small fw-semibold">Durum: Bağlı</div>
+                        }
+                        else
+                        {
+                            <div class="text-danger small fw-semibold">Durum: Bağlı değil</div>
+                        }
+
                     </p>
                 </div>
             </div>
@@ -27,6 +44,19 @@
                     <h5 class="card-title">Firma / Dönem Ayarları</h5>
                     <p class="card-text text-muted">
                         Firma ve dönem seçimini buradan güncelleyebilirsiniz.
+                        @if (ViewBag.SelectedFirm != null && ViewBag.SelectedPeriod != null)
+                        {
+                            <div class="text-success small fw-semibold">
+                                Durum: @ViewBag.SelectedFirm / @ViewBag.SelectedPeriod seçili
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-danger small fw-semibold">
+                                Durum: Henüz seçilmedi
+                            </div>
+                        }
+
                     </p>
                 </div>
             </div>
