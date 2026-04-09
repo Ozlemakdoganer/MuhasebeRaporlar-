@@ -23,17 +23,16 @@
                 <div class="card-body">
                     <h5 class="card-title">Veritabanı Ayarları</h5>
                     <p class="card-text text-muted">
-                        SQL bağlantı bilgilerini buradan tanımlayın.
-                        @if (ViewBag.DbConnected == true)
-                        {
-                            <div class="text-success small fw-semibold">Durum: Bağlı</div>
-                        }
-                        else
-                        {
-                            <div class="text-danger small fw-semibold">Durum: Bağlı değil</div>
-                        }
-
+                        SQL bağlantı bilgilerini buradan tanımlayın.                       
                     </p>
+                    @if (ViewBag.DbConnected == true)
+                    {
+                        <div class="text-success small fw-semibold">Durum: Bağlı</div>
+                    }
+                    else
+                    {
+                        <div class="text-danger small fw-semibold">Durum: Bağlı değil</div>
+                    }
                 </div>
             </div>
         </div>
@@ -43,21 +42,20 @@
                 <div class="card-body">
                     <h5 class="card-title">Firma / Dönem Ayarları</h5>
                     <p class="card-text text-muted">
-                        Firma ve dönem seçimini buradan güncelleyebilirsiniz.
-                        @if (ViewBag.SelectedFirm != null && ViewBag.SelectedPeriod != null)
-                        {
-                            <div class="text-success small fw-semibold">
-                                Durum: @ViewBag.SelectedFirm / @ViewBag.SelectedPeriod seçili
-                            </div>
-                        }
-                        else
-                        {
-                            <div class="text-danger small fw-semibold">
-                                Durum: Henüz seçilmedi
-                            </div>
-                        }
-
+                        Firma ve dönem seçimini buradan güncelleyebilirsiniz.                        
                     </p>
+                    @if (ViewBag.SelectedFirm != null && ViewBag.SelectedPeriod != null)
+                    {
+                        <div class="text-success small fw-semibold">
+                            Durum: @ViewBag.SelectedFirm / @ViewBag.SelectedPeriod seçili
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="text-danger small fw-semibold">
+                            Durum: Henüz seçilmedi
+                        </div>
+                    }
                 </div>
             </div>
         </div>

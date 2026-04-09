@@ -1,0 +1,128 @@
+﻿@model List<LogoRaporApp.Models.MizanItem>
+@{
+    Layout = null;
+}
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-3">İki Tarih Arası Mizan</h4>
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-primary">Ara</button>
+        <button type="button" class="btn btn-outline-secondary">Temizle</button>
+        <button type="button" class="btn btn-outline-success">Excel</button>
+        <button type="button" class="btn btn-outline-dark">Yazdır</button>
+    </div>
+</div>
+
+<div class="card mb-3">
+    <div class="card-body">
+
+        <form id="mizanForm" method="get" action="/Home/Mizan">
+
+            <div class="row align-items-end">
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Başlangıç Tarihi</label>
+                    <input type="date" name="baslangicTarihi" class="form-control" value="@ViewBag.BaslangicTarihi" />
+                </div>
+
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Bitiş Tarihi</label>
+                    <input type="date" name="bitisTarihi" class="form-control" value="@ViewBag.BitisTarihi" />
+                </div>
+
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Hesap Kodu Başlangıç</label>
+                    <input type="text" name="hesapKoduBaslangic" class="form-control" placeholder="Örn: 100" value="@ViewBag.HesapKoduBaslangic" />
+                </div>
+
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Hesap Kodu Bitiş</label>
+                    <input type="text" name="hesapKoduBitis" class="form-control" placeholder="Örn: 999" value="@ViewBag.HesapKoduBitis" />
+                </div>
+
+                <div class="col-md-2 mb-3">
+                    <label class="form-label">Hesap Seviyesi</label>
+                    <input type="number" name="hesapSeviyesi" class="form-control" placeholder="Örn: 3" value="@ViewBag.HesapSeviyesi" />
+                </div>
+
+                <div class="col-md-2 mb-3">
+                    <button type="submit" class="btn btn-primary w-100 mb-2">Getir</button>
+                    <button type="button"
+                            class="btn btn-outline-primary w-100"
+                            onclick="var alan = document.getElementById('detayliFiltreAlani'); alan.style.display = (alan.style.display === 'none' ? 'block' : 'none');">
+                        Detaylı Filtreler ▾
+                    </button>
+                </div>
+            </div>
+
+            <div id="detayliFiltreAlani" style="display:none;">
+                <hr />
+
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Hesap Türü</label>
+                        <select name="hesapTuru" class="form-select">
+                            <option value="Tumu">Tümü</option>
+                            <option value="AnaHesap">Ana Hesap</option>
+                            <option value="AltHesap">Alt Hesap</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Hareket Görmeyenler</label>
+                        <select name="hareketGormeyenler" class="form-select">
+                            <option value="Listelenecek">Listelenecek</option>
+                            <option value="Listelenmeyecek">Listelenmeyecek</option>
+                        </select>
+                    </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Bakiye Vermeyenler</label>
+                        <select name="bakiyeVermeyenler" class="form-select">
+                            <option value="Listelenecek">Listelenecek</option>
+                            <option value="Listelenmeyecek">Listelenmeyecek</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+        </form>
+
+    </div>
+</div>
+<table class="table table-bordered table-striped">
+    <thead>
+        <tr>
+            <th>Hesap Kodu</th>
+            <th>Hesap Adı</th>
+            <th class="text-end">Borç</th>
+            <th class="text-end">Alacak</th>
+            <th class="text-end">Borç Bakiye</th>
+            <th class="text-end">Alacak Bakiye</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model == null || !Model.Any())
+        {
+            <tr>
+                <td colspan="6" class="text-center text-muted">Henüz veri getirilmedi.</td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>@item.HesapKodu</td>
+                    <td>@item.HesapAdi</td>
+                    <td class="text-end">@item.Borc</td>
+                    <td class="text-end">@item.Alacak</td>
+                    <td class="text-end">@item.BorcBakiye</td>
+                    <td class="text-end">@item.AlacakBakiye</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+

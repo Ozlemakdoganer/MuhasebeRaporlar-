@@ -366,7 +366,7 @@ else
 
 
         <div id="financeSubMenu" class="submenu">
-            <a class="submenu-item" href="#">📅 İki Tarih Arası Mizan</a>
+            <a class="submenu-item" href="javascript:void(0)" onclick="mizanGetir()">📅 İki Tarih Arası Mizan</a>
             <a class="submenu-item" href="#">📈 Kar Zarar Tablosu</a>
             <a class="submenu-item" href="#">📊 Bilanço</a>
             <a class="submenu-item" href="#">📦 E-Envanter</a>
@@ -449,7 +449,7 @@ else
         <div id="reportArea" class="report-area"></div>
     </div>
 
-
+    
     <script>
     function toggleMenu() {
         var menu = document.getElementById("financeSubMenu");
@@ -644,10 +644,25 @@ else
             location.reload();
         });
     }
+    if (e.target && e.target.id === "mizanForm") {
+    e.preventDefault();
+
+    const form = e.target;
+    const formData = new FormData(form);
+    const queryString = new URLSearchParams(formData).toString();
+
+    fetch('/Home/Mizan?' + queryString)
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById("welcomeArea").style.display = "none";
+            document.getElementById("reportArea").style.display = "block";
+            document.getElementById("reportArea").innerHTML = data;
+            document.getElementById("pageTitle").innerText = "İki Tarih Arası Mizan";
+        });
+}
+
 
 });
-
-
 
     function footerBilgiYukle() {
 
@@ -670,6 +685,40 @@ else
 // sayfa açılınca
 footerBilgiYukle();
 
+function toggleDetay() {
+    var div = document.getElementById("detayFiltre");
+
+    if (div.style.display === "none") {
+        div.style.display = "block";
+    } else {
+        div.style.display = "none";
+    }
+}
+
+//---Mizan getir
+function mizanGetir() {
+    fetch('/Home/Mizan')
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById("welcomeArea").style.display = "none";
+            document.getElementById("reportArea").style.display = "block";
+            document.getElementById("reportArea").innerHTML = data;
+            document.getElementById("pageTitle").innerText = "İki Tarih Arası Mizan";
+        });
+}
+
+function mizanDetayToggle() {
+    var alan = document.getElementById("mizanDetayAlan");
+
+    if (alan.style.display === "none") {
+        alan.style.display = "block";
+    } else {
+        alan.style.display = "none";
+    }
+}
+
+
+
 </script>
 <div id="footerInfo">
 
@@ -683,6 +732,7 @@ footerBilgiYukle();
     </span>
 
 </div>
+
 
 
 </body>

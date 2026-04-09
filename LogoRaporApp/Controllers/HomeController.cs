@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Data.SqlClient;
 using LogoRaporApp.Models;
 using System.Data;
+using System.Linq;
+
 
 namespace LogoRaporApp.Controllers
 {
@@ -76,17 +78,21 @@ namespace LogoRaporApp.Controllers
                     conn.Open();
                 }
 
+                bool hasExistingSelection =
+    HttpContext.Session.GetInt32("firm") != null &&
+    HttpContext.Session.GetInt32("period") != null;
+
                 HttpContext.Session.SetString("db", connStr);
                 HttpContext.Session.Remove("firm");
                 HttpContext.Session.Remove("period");
 
-
-                if (HttpContext.Session.GetInt32("firm") == null || HttpContext.Session.GetInt32("period") == null)
+                if (hasExistingSelection)
                 {
-                    return Content("SUCCESS_FIRST");
+                    return Content("SUCCESS_UPDATE");
                 }
 
-                return Content("SUCCESS_UPDATE");
+                return Content("SUCCESS_FIRST");
+
 
 
             }
@@ -189,7 +195,7 @@ namespace LogoRaporApp.Controllers
         }
         //----------FIRMA+DONEM SECIMI SONRASI-----------------
 
-        [HttpPost]
+        
         [HttpPost]
         public IActionResult SelectCompany(int firmNr, int periodNr)
         {
@@ -263,6 +269,175 @@ namespace LogoRaporApp.Controllers
             }
         }
 
+
+
+        //--------MIZAN-----------        
+        [HttpGet]
+        public IActionResult Mizan(
+    string? baslangicTarihi,
+    string? bitisTarihi,
+    string? hesapKoduBaslangic,
+    string? hesapKoduBitis,
+    string? hesapSeviyesi,
+    string? hesapTuru,
+    string? hareketGormeyenler,
+    string? bakiyeVermeyenler)
+        {
+            if (HttpContext.Session.GetString("db") == null)
+                return Content("DB bağlantısı bulunamadı.");
+
+            var firm = HttpContext.Session.GetInt32("firm");
+            var period = HttpContext.Session.GetInt32("period");
+
+            if (firm == null || period == null)
+                return Content("Firma / dönem seçimi yapılmamış.");
+
+            ViewBag.BaslangicTarihi = baslangicTarihi;
+            ViewBag.BitisTarihi = bitisTarihi;
+            ViewBag.HesapKoduBaslangic = hesapKoduBaslangic;
+            ViewBag.HesapKoduBitis = hesapKoduBitis;
+            ViewBag.HesapSeviyesi = hesapSeviyesi;
+            ViewBag.HesapTuru = hesapTuru;
+            ViewBag.HareketGormeyenler = hareketGormeyenler;
+            ViewBag.BakiyeVermeyenler = bakiyeVermeyenler;
+
+            List<MizanItem> model = new List<MizanItem>();
+            Dictionary<string, (decimal Borc, decimal Alacak)> hareketToplamlari = new();
+
+            var connStr = HttpContext.Session.GetString("db");
+            string firmStr = firm.Value.ToString("D3");
+            string periodStr = period.Value.ToString("D2");
+
+            using (SqlConnection con = new SqlConnection(connStr))
+            {
+                con.Open();
+
+                string hareketSql = $@"
+    SELECT ACCOUNTCODE, SUM(DEBIT) AS TOPLAM_BORC, SUM(CREDIT) AS TOPLAM_ALACAK
+    FROM LG_{firmStr}_{periodStr}_EMFLINE
+    GROUP BY ACCOUNTCODE
+";
+
+                SqlCommand hareketCmd = new SqlCommand(hareketSql, con);
+                SqlDataReader hareketDr = hareketCmd.ExecuteReader();
+
+                while (hareketDr.Read())
+                {
+                    string hesapKodu = hareketDr["ACCOUNTCODE"]?.ToString() ?? "";
+                    decimal borc = hareketDr["TOPLAM_BORC"] != DBNull.Value ? Convert.ToDecimal(hareketDr["TOPLAM_BORC"]) : 0;
+                    decimal alacak = hareketDr["TOPLAM_ALACAK"] != DBNull.Value ? Convert.ToDecimal(hareketDr["TOPLAM_ALACAK"]) : 0;
+
+                    var ustKodlar = HesapKoduKir(hesapKodu);
+
+                    foreach (var kod in ustKodlar)
+                    {
+                        if (hareketToplamlari.ContainsKey(kod))
+                        {
+                            var mevcut = hareketToplamlari[kod];
+                            hareketToplamlari[kod] = (mevcut.Borc + borc, mevcut.Alacak + alacak);
+                        }
+                        else
+                        {
+                            hareketToplamlari[kod] = (borc, alacak);
+                        }
+                    }
+                }
+
+
+                hareketDr.Close();
+
+
+                string sql = $@"
+        SELECT CODE, DEFINITION_
+        FROM LG_{firmStr}_EMUHACC
+        ORDER BY CODE
+    ";
+
+                SqlCommand cmd = new SqlCommand(sql, con);
+                SqlDataReader dr = cmd.ExecuteReader();
+
+                while (dr.Read())
+                {
+                    string hesapKodu = dr["CODE"]?.ToString() ?? "";
+                    string hesapAdi = dr["DEFINITION_"]?.ToString() ?? "";
+
+                    if (!string.IsNullOrEmpty(hesapSeviyesi))
+                    {
+                        int secilenSeviye = Convert.ToInt32(hesapSeviyesi);
+                        int mevcutSeviye = HesapSeviyesiBul(hesapKodu);
+
+                        if (mevcutSeviye > secilenSeviye)
+                            continue;
+                    }
+
+
+                    decimal borc = 0;
+                    decimal alacak = 0;
+
+                    if (hareketToplamlari.ContainsKey(hesapKodu))
+                    {
+                        borc = hareketToplamlari[hesapKodu].Borc;
+                        alacak = hareketToplamlari[hesapKodu].Alacak;
+                    }
+
+                    decimal borcBakiye = 0;
+                    decimal alacakBakiye = 0;
+
+                    if (borc > alacak)
+                    {
+                        borcBakiye = borc - alacak;
+                    }
+                    else if (alacak > borc)
+                    {
+                        alacakBakiye = alacak - borc;
+                    }
+
+                    model.Add(new MizanItem
+                    {
+                        HesapKodu = hesapKodu,
+                        HesapAdi = hesapAdi,
+                        Borc = borc,
+                        Alacak = alacak,
+                        BorcBakiye = borcBakiye,
+                        AlacakBakiye = alacakBakiye
+                    });
+
+
+
+                }
+            }
+
+
+            return View(model);
+        }
+        //--------------Kırılım-----
+        private List<string> HesapKoduKir(string hesapKodu)
+        {
+            List<string> sonuc = new List<string>();
+
+            if (string.IsNullOrWhiteSpace(hesapKodu))
+                return sonuc;
+
+            var parcalar = hesapKodu.Split('.');
+
+            for (int i = 0; i < parcalar.Length; i++)
+            {
+                sonuc.Add(string.Join(".", parcalar.Take(i + 1)));
+            }
+
+            return sonuc;
+        }
+        //-------HesapKoduKır-----------
+
+        private int HesapSeviyesiBul(string hesapKodu)
+        {
+            if (string.IsNullOrWhiteSpace(hesapKodu))
+                return 0;
+
+            return hesapKodu.Split('.').Length;
+        }
+
+
         // ---------------- DASHBOARD ----------------
 
         public IActionResult Dashboard()
@@ -282,7 +457,7 @@ namespace LogoRaporApp.Controllers
 
         //---------DATABASE SETTINGS------------
 
-        [HttpGet]
+        
         [HttpGet]
         public IActionResult DbSettings()
         {
@@ -387,5 +562,7 @@ namespace LogoRaporApp.Controllers
             });
         }
 
+        //-----------------Mizan--------
+       
     }
 }
