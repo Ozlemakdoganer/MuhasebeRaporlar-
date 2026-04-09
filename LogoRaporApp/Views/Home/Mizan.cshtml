@@ -71,16 +71,16 @@
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Hareket Görmeyenler</label>
                         <select name="hareketGormeyenler" class="form-select">
-                            <option value="Listelenecek">Listelenecek</option>
-                            <option value="Listelenmeyecek">Listelenmeyecek</option>
+                            <option value="Listelenecek" selected="@(ViewBag.HareketGormeyenler == "Listelenecek" ? "selected" : null)">Listelenecek</option>
+                            <option value="Listelenmeyecek" selected="@(ViewBag.HareketGormeyenler == "Listelenmeyecek" ? "selected" : null)">Listelenmeyecek</option>
                         </select>
                     </div>
 
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Bakiye Vermeyenler</label>
                         <select name="bakiyeVermeyenler" class="form-select">
-                            <option value="Listelenecek">Listelenecek</option>
-                            <option value="Listelenmeyecek">Listelenmeyecek</option>
+                            <option value="Listelenecek" selected="@(ViewBag.BakiyeVermeyenler == "Listelenecek" ? "selected" : null)">Listelenecek</option>
+                            <option value="Listelenmeyecek" selected="@(ViewBag.BakiyeVermeyenler == "Listelenmeyecek" ? "selected" : null)">Listelenmeyecek</option>
                         </select>
                     </div>
                 </div>
@@ -115,10 +115,10 @@
                 <tr>
                     <td>@item.HesapKodu</td>
                     <td>@item.HesapAdi</td>
-                    <td class="text-end">@item.Borc</td>
-                    <td class="text-end">@item.Alacak</td>
-                    <td class="text-end">@item.BorcBakiye</td>
-                    <td class="text-end">@item.AlacakBakiye</td>
+                    <td class="text-end">@item.Borc.ToString("N2")</td>
+                    <td class="text-end">@item.Alacak.ToString("N2")</td>
+                    <td class="text-end">@item.BorcBakiye.ToString("N2")</td>
+                    <td class="text-end">@item.AlacakBakiye.ToString("N2")</td>
                 </tr>
             }
         }

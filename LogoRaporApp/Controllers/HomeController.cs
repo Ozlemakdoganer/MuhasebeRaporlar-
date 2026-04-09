@@ -315,10 +315,17 @@ namespace LogoRaporApp.Controllers
                 string hareketSql = $@"
     SELECT ACCOUNTCODE, SUM(DEBIT) AS TOPLAM_BORC, SUM(CREDIT) AS TOPLAM_ALACAK
     FROM LG_{firmStr}_{periodStr}_EMFLINE
+    WHERE (@baslangicTarihi IS NULL OR DATE_ >= @baslangicTarihi)
+      AND (@bitisTarihi IS NULL OR DATE_ <= @bitisTarihi)
     GROUP BY ACCOUNTCODE
 ";
 
+
                 SqlCommand hareketCmd = new SqlCommand(hareketSql, con);
+                hareketCmd.Parameters.AddWithValue("@baslangicTarihi",
+                string.IsNullOrEmpty(baslangicTarihi) ? DBNull.Value : Convert.ToDateTime(baslangicTarihi));
+                hareketCmd.Parameters.AddWithValue("@bitisTarihi",
+                    string.IsNullOrEmpty(bitisTarihi) ? DBNull.Value : Convert.ToDateTime(bitisTarihi));
                 SqlDataReader hareketDr = hareketCmd.ExecuteReader();
 
                 while (hareketDr.Read())
@@ -348,12 +355,17 @@ namespace LogoRaporApp.Controllers
 
 
                 string sql = $@"
-        SELECT CODE, DEFINITION_
-        FROM LG_{firmStr}_EMUHACC
-        ORDER BY CODE
-    ";
+    SELECT CODE, DEFINITION_
+    FROM LG_{firmStr}_EMUHACC
+    WHERE (@hesapKoduBaslangic IS NULL OR @hesapKoduBaslangic = '' OR CODE >= @hesapKoduBaslangic)
+      AND (@hesapKoduBitis IS NULL OR @hesapKoduBitis = '' OR CODE <= @hesapKoduBitis)
+    ORDER BY CODE
+";
+
 
                 SqlCommand cmd = new SqlCommand(sql, con);
+                cmd.Parameters.AddWithValue("@hesapKoduBaslangic", (object?)hesapKoduBaslangic ?? DBNull.Value);
+                cmd.Parameters.AddWithValue("@hesapKoduBitis", (object?)hesapKoduBitis ?? DBNull.Value);
                 SqlDataReader dr = cmd.ExecuteReader();
 
                 while (dr.Read())
@@ -391,6 +403,14 @@ namespace LogoRaporApp.Controllers
                     {
                         alacakBakiye = alacak - borc;
                     }
+
+
+                    if (hareketGormeyenler == "Listelenmeyecek" && borc == 0 && alacak == 0)
+                        continue;
+
+                    if (bakiyeVermeyenler == "Listelenmeyecek" && borcBakiye == 0 && alacakBakiye == 0)
+                        continue;
+
 
                     model.Add(new MizanItem
                     {
