@@ -368,6 +368,9 @@ namespace LogoRaporApp.Controllers
                 cmd.Parameters.AddWithValue("@hesapKoduBitis", (object?)hesapKoduBitis ?? DBNull.Value);
                 SqlDataReader dr = cmd.ExecuteReader();
 
+                decimal genelToplamBorc = 0;
+                decimal genelToplamAlacak = 0;
+
                 while (dr.Read())
                 {
                     string hesapKodu = dr["CODE"]?.ToString() ?? "";
@@ -382,7 +385,6 @@ namespace LogoRaporApp.Controllers
                             continue;
                     }
 
-
                     decimal borc = 0;
                     decimal alacak = 0;
 
@@ -395,6 +397,9 @@ namespace LogoRaporApp.Controllers
                     decimal borcBakiye = 0;
                     decimal alacakBakiye = 0;
 
+                    genelToplamBorc += borc;
+                    genelToplamAlacak += alacak;
+
                     if (borc > alacak)
                     {
                         borcBakiye = borc - alacak;
@@ -404,13 +409,35 @@ namespace LogoRaporApp.Controllers
                         alacakBakiye = alacak - borc;
                     }
 
+                    if (!string.IsNullOrEmpty(hesapTuru) && hesapTuru != "Tumu")
+                    {
+                        bool uygunMu = false;
+
+                        if (hesapTuru == "KdvHesaplari")
+                        {
+                            uygunMu = hesapKodu.StartsWith("190") ||
+                                      hesapKodu.StartsWith("191") ||
+                                      hesapKodu.StartsWith("391");
+                        }
+                        else if (hesapTuru == "Kkeg")
+                        {
+                            uygunMu = hesapKodu.StartsWith("689");
+                        }
+                        else if (hesapTuru == "GelirTablosu")
+                        {
+                            uygunMu = hesapKodu.StartsWith("600") ||
+                                      hesapKodu.StartsWith("7");
+                        }
+
+                        if (!uygunMu)
+                            continue;
+                    }
 
                     if (hareketGormeyenler == "Listelenmeyecek" && borc == 0 && alacak == 0)
                         continue;
 
                     if (bakiyeVermeyenler == "Listelenmeyecek" && borcBakiye == 0 && alacakBakiye == 0)
                         continue;
-
 
                     model.Add(new MizanItem
                     {
@@ -421,11 +448,15 @@ namespace LogoRaporApp.Controllers
                         BorcBakiye = borcBakiye,
                         AlacakBakiye = alacakBakiye
                     });
-
-
-
                 }
             }
+
+
+                ViewBag.ToplamBorc = model.Sum(x => x.Borc);
+            ViewBag.ToplamAlacak = model.Sum(x => x.Alacak);
+            ViewBag.ToplamBorcBakiye = model.Sum(x => x.BorcBakiye);
+            ViewBag.ToplamAlacakBakiye = model.Sum(x => x.AlacakBakiye);
+
 
 
             return View(model);

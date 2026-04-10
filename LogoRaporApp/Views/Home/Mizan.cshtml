@@ -8,7 +8,8 @@
     <h4 class="mb-3">İki Tarih Arası Mizan</h4>
     <div class="d-flex gap-2">
         <button type="button" class="btn btn-primary">Ara</button>
-        <button type="button" class="btn btn-outline-secondary">Temizle</button>
+        <a href="javascript:void(0)" class="btn btn-outline-secondary" onclick="mizanTemizle()">Temizle</a>
+
         <button type="button" class="btn btn-outline-success">Excel</button>
         <button type="button" class="btn btn-outline-dark">Yazdır</button>
     </div>
@@ -62,11 +63,14 @@
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Hesap Türü</label>
                         <select name="hesapTuru" class="form-select">
-                            <option value="Tumu">Tümü</option>
-                            <option value="AnaHesap">Ana Hesap</option>
-                            <option value="AltHesap">Alt Hesap</option>
+                            <option value="Tumu" selected="@(ViewBag.HesapTuru == "Tumu" ? "selected" : null)">Tümü</option>
+                            <option value="KdvHesaplari" selected="@(ViewBag.HesapTuru == "KdvHesaplari" ? "selected" : null)">Kdv Hesapları</option>
+                            <option value="Kkeg" selected="@(ViewBag.HesapTuru == "Kkeg" ? "selected" : null)">Kanunen Kabul Edilmeyen Giderler</option>
+                            <option value="GelirTablosu" selected="@(ViewBag.HesapTuru == "GelirTablosu" ? "selected" : null)">Gelir Tablosu</option>
                         </select>
+
                     </div>
+
 
                     <div class="col-md-4 mb-3">
                         <label class="form-label">Hareket Görmeyenler</label>
@@ -121,8 +125,17 @@
                     <td class="text-end">@item.AlacakBakiye.ToString("N2")</td>
                 </tr>
             }
+
+            <tr class="table-dark fw-bold">
+                <td colspan="2" class="text-end">TOPLAM</td>
+                <td class="text-end">@ViewBag.ToplamBorc.ToString("N2")</td>
+                <td class="text-end">@ViewBag.ToplamAlacak.ToString("N2")</td>
+                <td class="text-end">@ViewBag.ToplamBorcBakiye.ToString("N2")</td>
+                <td class="text-end">@ViewBag.ToplamAlacakBakiye.ToString("N2")</td>
+            </tr>
         }
     </tbody>
+
 </table>
 
 
