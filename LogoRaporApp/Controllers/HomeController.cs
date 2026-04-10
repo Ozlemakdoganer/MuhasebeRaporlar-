@@ -274,14 +274,14 @@ namespace LogoRaporApp.Controllers
         //--------MIZAN-----------        
         [HttpGet]
         public IActionResult Mizan(
-    string? baslangicTarihi,
-    string? bitisTarihi,
-    string? hesapKoduBaslangic,
-    string? hesapKoduBitis,
-    string? hesapSeviyesi,
-    string? hesapTuru,
-    string? hareketGormeyenler,
-    string? bakiyeVermeyenler)
+     string? baslangicTarihi,
+     string? bitisTarihi,
+     string? hesapKoduBaslangic,
+     string? hesapKoduBitis,
+     string? hesapSeviyesi,
+     string? hesapTuru,
+     string? hareketGormeyenler,
+     string? bakiyeVermeyenler)
         {
             if (HttpContext.Session.GetString("db") == null)
                 return Content("DB bağlantısı bulunamadı.");
@@ -313,19 +313,19 @@ namespace LogoRaporApp.Controllers
                 con.Open();
 
                 string hareketSql = $@"
-    SELECT ACCOUNTCODE, SUM(DEBIT) AS TOPLAM_BORC, SUM(CREDIT) AS TOPLAM_ALACAK
-    FROM LG_{firmStr}_{periodStr}_EMFLINE
-    WHERE (@baslangicTarihi IS NULL OR DATE_ >= @baslangicTarihi)
-      AND (@bitisTarihi IS NULL OR DATE_ <= @bitisTarihi)
-    GROUP BY ACCOUNTCODE
-";
-
+            SELECT ACCOUNTCODE, SUM(DEBIT) AS TOPLAM_BORC, SUM(CREDIT) AS TOPLAM_ALACAK
+            FROM LG_{firmStr}_{periodStr}_EMFLINE
+            WHERE (@baslangicTarihi IS NULL OR DATE_ >= @baslangicTarihi)
+              AND (@bitisTarihi IS NULL OR DATE_ <= @bitisTarihi)
+            GROUP BY ACCOUNTCODE
+        ";
 
                 SqlCommand hareketCmd = new SqlCommand(hareketSql, con);
                 hareketCmd.Parameters.AddWithValue("@baslangicTarihi",
-                string.IsNullOrEmpty(baslangicTarihi) ? DBNull.Value : Convert.ToDateTime(baslangicTarihi));
+                    string.IsNullOrEmpty(baslangicTarihi) ? DBNull.Value : Convert.ToDateTime(baslangicTarihi));
                 hareketCmd.Parameters.AddWithValue("@bitisTarihi",
                     string.IsNullOrEmpty(bitisTarihi) ? DBNull.Value : Convert.ToDateTime(bitisTarihi));
+
                 SqlDataReader hareketDr = hareketCmd.ExecuteReader();
 
                 while (hareketDr.Read())
@@ -350,26 +350,21 @@ namespace LogoRaporApp.Controllers
                     }
                 }
 
-
                 hareketDr.Close();
 
-
                 string sql = $@"
-    SELECT CODE, DEFINITION_
-    FROM LG_{firmStr}_EMUHACC
-    WHERE (@hesapKoduBaslangic IS NULL OR @hesapKoduBaslangic = '' OR CODE >= @hesapKoduBaslangic)
-      AND (@hesapKoduBitis IS NULL OR @hesapKoduBitis = '' OR CODE <= @hesapKoduBitis)
-    ORDER BY CODE
-";
-
+            SELECT CODE, DEFINITION_
+            FROM LG_{firmStr}_EMUHACC
+            WHERE (@hesapKoduBaslangic IS NULL OR @hesapKoduBaslangic = '' OR CODE >= @hesapKoduBaslangic)
+              AND (@hesapKoduBitis IS NULL OR @hesapKoduBitis = '' OR CODE <= @hesapKoduBitis)
+            ORDER BY CODE
+        ";
 
                 SqlCommand cmd = new SqlCommand(sql, con);
                 cmd.Parameters.AddWithValue("@hesapKoduBaslangic", (object?)hesapKoduBaslangic ?? DBNull.Value);
                 cmd.Parameters.AddWithValue("@hesapKoduBitis", (object?)hesapKoduBitis ?? DBNull.Value);
-                SqlDataReader dr = cmd.ExecuteReader();
 
-                decimal genelToplamBorc = 0;
-                decimal genelToplamAlacak = 0;
+                SqlDataReader dr = cmd.ExecuteReader();
 
                 while (dr.Read())
                 {
@@ -396,9 +391,6 @@ namespace LogoRaporApp.Controllers
 
                     decimal borcBakiye = 0;
                     decimal alacakBakiye = 0;
-
-                    genelToplamBorc += borc;
-                    genelToplamAlacak += alacak;
 
                     if (borc > alacak)
                     {
@@ -449,18 +441,13 @@ namespace LogoRaporApp.Controllers
                         AlacakBakiye = alacakBakiye
                     });
                 }
+
+                dr.Close();
             }
-
-
-                ViewBag.ToplamBorc = model.Sum(x => x.Borc);
-            ViewBag.ToplamAlacak = model.Sum(x => x.Alacak);
-            ViewBag.ToplamBorcBakiye = model.Sum(x => x.BorcBakiye);
-            ViewBag.ToplamAlacakBakiye = model.Sum(x => x.AlacakBakiye);
-
-
 
             return View(model);
         }
+
         //--------------Kırılım-----
         private List<string> HesapKoduKir(string hesapKodu)
         {
