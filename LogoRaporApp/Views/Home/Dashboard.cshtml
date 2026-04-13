@@ -124,17 +124,18 @@
                 }
 
             /* TOPBAR */
-            .topbar {
-                height: 60px;
-                background: linear-gradient(90deg, #0d6efd, #0a58ca);
-                color: white;
-                margin-left: 240px;
-                display: flex;
-                align-items: center;
-                justify-content: space-between;
-                padding: 0 20px;
-                box-shadow: 0 2px 10px rgba(0,0,0,0.2);
-            }
+.topbar {
+    height: 60px;
+    background: linear-gradient(90deg, #1F7A5A, #176347);
+    color: white;
+    margin-left: 240px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+}
+
             .topbar.collapsed {
                 margin-left: 70px;
                 }
@@ -183,19 +184,24 @@
 
 
             .card-box {
-                padding: 25px;
-                border-radius: 12px;
-                background: white;
-                box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-                transition: 0.2s;
-                cursor: pointer;
-                font-weight: 500;
-            }
+    padding: 25px;
+    border-radius: 14px;
+    background: #ffffff;
+    border: 1px solid #d7e8dd;
+    box-shadow: 0 8px 22px rgba(31, 122, 90, 0.12);
+    transition: all 0.2s ease;
+    cursor: pointer;
+    font-weight: 500;
+}
 
-                .card-box:hover {
-                    transform: translateY(-5px);
-                    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-                }
+.card-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 14px 30px rgba(31, 122, 90, 0.18);
+    border-color: #9dcab0;
+}
+
+
+
                 .sidebar.collapsed .menu-text,
 .sidebar.collapsed .title-text {
     display: none;
@@ -223,10 +229,12 @@
 .report-area {
     display: none;
     background: #ffffff;
-    border-radius: 12px;
-    padding: 20px;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    border-radius: 14px;
+    padding: 22px;
+    border: 1px solid #dcebe2;
+    box-shadow: 0 8px 22px rgba(31, 122, 90, 0.10);
 }
+
 .sidebar-title {
     display: flex;
     align-items: center;
@@ -285,6 +293,102 @@
     left: 70px;
 }
 
+.btn-primary {
+    background-color: #1F7A5A;
+    border-color: #1F7A5A;
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: #176347;
+    border-color: #176347;
+}
+
+.btn-outline-primary {
+    color: #1F7A5A;
+    border-color: #1F7A5A;
+}
+
+.btn-outline-primary:hover,
+.btn-outline-primary:focus {
+    background-color: #1F7A5A;
+    border-color: #1F7A5A;
+    color: white;
+}
+
+.btn-outline-success {
+    color: #1F7A5A;
+    border-color: #1F7A5A;
+}
+
+.btn-outline-success:hover,
+.btn-outline-success:focus {
+    background-color: #1F7A5A;
+    border-color: #1F7A5A;
+    color: white;
+}
+
+.btn-primary:active,
+.btn-primary.active,
+.show > .btn-primary.dropdown-toggle {
+    background-color: #176347 !important;
+    border-color: #176347 !important;
+}
+
+.btn-outline-primary:active,
+.btn-outline-primary.active,
+.show > .btn-outline-primary.dropdown-toggle {
+    background-color: #1F7A5A !important;
+    border-color: #1F7A5A !important;
+    color: white !important;
+}
+
+.btn-outline-success:active,
+.btn-outline-success.active,
+.show > .btn-outline-success.dropdown-toggle {
+    background-color: #1F7A5A !important;
+    border-color: #1F7A5A !important;
+    color: white !important;
+}
+
+.btn-primary:focus,
+.btn-outline-primary:focus,
+.btn-outline-success:focus {
+    box-shadow: 0 0 0 0.2rem rgba(31, 122, 90, 0.25) !important;
+}
+.form-control:focus,
+.form-select:focus {
+    border-color: #1F7A5A !important;
+    box-shadow: 0 0 0 0.2rem rgba(31, 122, 90, 0.25) !important;
+}
+
+.card {
+    border: 1px solid #dcebe2;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(31, 122, 90, 0.08);
+}
+
+.table thead th {
+    background-color: #edf6f0;
+    color: #1f4f3b;
+    border-bottom: 1px solid #cfe2d6;
+    font-weight: 600;
+    vertical-align: middle;
+    border-color: #dcebe2;
+}
+
+.table tbody tr:hover {
+    background-color: #f7fbf8;
+}
+
+.active-menu {
+    background: rgba(31, 122, 90, 0.28) !important;
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
+}
+
+
+
 
     </style>
 </head>
@@ -303,9 +407,9 @@
     <div class="sidebar-menu">
        @if (ViewBag.CanUseReports == true)
 {
-    <a class="menu-item" href="javascript:void(0)" onclick="cariGetir()">
+    <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); cariGetir()">
         <span>📊</span>
-        <span class="menu-text">Cari Hesap Raporları</span>
+        <span class="menu-text">Cari Hesap Raporları</span>         
     </a>
 }
 else
@@ -319,7 +423,7 @@ else
 
         @if (ViewBag.CanUseReports == true)
 {
-    <a class="menu-item" href="javascript:void(0)">
+    <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); satisFaturalariDokumuGetir()">
         <span>🧾</span>
         <span class="menu-text">Satış Faturaları Dökümü</span>
     </a>
@@ -335,7 +439,7 @@ else
 
         @if (ViewBag.CanUseReports == true)
 {
-    <a class="menu-item" href="javascript:void(0)">
+    <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); satinAlmaFaturalariDokumuGetir()">
         <span>📦</span>
         <span class="menu-text">Satınalma Faturaları Dökümü</span>
     </a>
@@ -366,13 +470,13 @@ else
 
 
         <div id="financeSubMenu" class="submenu">
-            <a class="submenu-item" href="javascript:void(0)" onclick="mizanGetir()">📅 İki Tarih Arası Mizan</a>
-            <a class="submenu-item" href="#">📈 Kar Zarar Tablosu</a>
-            <a class="submenu-item" href="#">📊 Bilanço</a>
-            <a class="submenu-item" href="#">📦 E-Envanter</a>
+            <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); mizanGetir()">📅 İki Tarih Arası Mizan</a>
+            <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); karZararGetir()">📈 Kar Zarar Tablosu</a>
+            <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); bilancoGetir()">📊 Bilanço</a>
+            <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); eEnvanterGetir()">📦 E-Envanter</a>
         </div>
 
-        <a class="menu-item" href="javascript:void(0)" onclick="ayarlarGetir()">
+        <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); ayarlarGetir()">
             <span>⚙</span>
             <span class="menu-text">Ayarlar</span>
         </a>
@@ -716,6 +820,17 @@ function mizanDetayToggle() {
         alan.style.display = "none";
     }
 }
+
+function aktifMenuyuIsaretle(element) {
+    document.querySelectorAll(".menu-item, .submenu-item").forEach(function (item) {
+        item.classList.remove("active-menu");
+    });
+
+    if (element) {
+        element.classList.add("active-menu");
+    }
+}
+
 
 
 

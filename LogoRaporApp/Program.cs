@@ -2,6 +2,7 @@ using LogoRaporApp.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
+
 // Gerekli servisleri buraya ekliyoruz:
 builder.Services.AddControllersWithViews(); // MVC için Controller ve View desteği
 builder.Services.AddSession();             // Kullanıcı oturumu (login bilgisi gibi) için Session servisi
