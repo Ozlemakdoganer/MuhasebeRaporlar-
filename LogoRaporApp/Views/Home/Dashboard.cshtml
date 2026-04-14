@@ -831,6 +831,18 @@ function aktifMenuyuIsaretle(element) {
     }
 }
 
+function mizanTemizle() {
+    fetch('/Home/Mizan')
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById("welcomeArea").style.display = "none";
+            document.getElementById("reportArea").style.display = "block";
+            document.getElementById("reportArea").innerHTML = data;
+            document.getElementById("pageTitle").innerText = "İki Tarih Arası Mizan";
+        });
+}
+
+
 
 
 

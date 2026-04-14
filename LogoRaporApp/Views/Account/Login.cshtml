@@ -22,12 +22,13 @@
 
             .login-box {
                 width: 400px;
-                padding: 34px;
+                padding: 36px;
                 background: rgba(255, 255, 255, 0.96);
-                border-radius: 18px;
-                box-shadow: 0 20px 45px rgba(31, 122, 90, 0.20);
+                border-radius: 20px;
+                box-shadow: 0 22px 50px rgba(31, 122, 90, 0.18);
                 backdrop-filter: blur(6px);
             }
+
 
 
             .login-header {
@@ -60,10 +61,17 @@
                     border-color: #176347 !important;
                 }
 
-            .form-control:focus {
-                border-color: #1F7A5A;
-                box-shadow: 0 0 0 0.2rem rgba(31, 122, 90, 0.25);
+            .form-control {
+                height: 46px;
+                border-radius: 10px;
+                border: 1px solid #d7e8dd;
             }
+
+                .form-control:focus {
+                    border-color: #1F7A5A;
+                    box-shadow: 0 0 0 0.2rem rgba(31, 122, 90, 0.25);
+                }
+
 
             .login-icon {
                 font-size: 34px;
@@ -78,6 +86,27 @@
                 color: #6b7d72;
                 line-height: 1.6;
             }
+
+            .password-wrapper {
+                position: relative;
+            }
+
+            .toggle-password {
+                position: absolute;
+                top: 50%;
+                right: 12px;
+                transform: translateY(-50%);
+                border: none;
+                background: transparent;
+                font-size: 16px;
+                cursor: pointer;
+                padding: 0;
+                line-height: 1;
+            }
+
+                .toggle-password:hover {
+                    opacity: 0.8;
+                }
 
     </style>
 </head>
@@ -111,7 +140,10 @@
 
             <div class="mb-3">
                 <label>Şifre</label>
-                <input type="password" name="password" class="form-control" placeholder="Şifre" />
+                <div class="password-wrapper">
+                    <input type="password" id="passwordInput" name="password" class="form-control" placeholder="Şifre" />
+                    <button type="button" class="toggle-password" onclick="togglePassword()" id="togglePasswordBtn">👁</button>
+                </div>
             </div>
 
             <button type="submit" class="btn btn-primary w-100">
@@ -123,9 +155,24 @@
             <div>Artuklu Muhasebe Ve Yazılım Çözümleri</div>
             <div>ERP Reporting Suite • v1.0</div>
         </div>
-
-
     </div>
+
+    <script>
+                   
+            function togglePassword() {
+                var passwordInput = document.getElementById("passwordInput");
+                var button = document.getElementById("togglePasswordBtn");
+
+                if (passwordInput.type === "password") {
+                    passwordInput.type = "text";
+                    button.innerText = "🙈";
+                } else {
+                    passwordInput.type = "password";
+                    button.innerText = "👁";
+                }
+            }    
+
+    </script>
 
 </body>
 </html>
