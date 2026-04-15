@@ -8,5 +8,7 @@
         public decimal Alacak { get; set; }
         public decimal BorcBakiye { get; set; }
         public decimal AlacakBakiye { get; set; }
-           }
+        public int Seviye { get; set; }
+
+    }
 }

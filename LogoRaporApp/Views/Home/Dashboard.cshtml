@@ -387,6 +387,44 @@
     box-shadow: inset 0 0 0 1px rgba(255,255,255,0.05);
 }
 
+@@media print {
+    .sidebar,
+    .topbar,
+    #footerInfo,
+    .btn,
+    .sidebar-toggle-area {
+        display: none !important;
+    }
+
+    .print-hide {
+        display: none !important;
+    }
+
+    #welcomeArea {
+        display: none !important;
+    }
+
+    body,
+    .content,
+    .report-area {
+        background: white !important;
+        box-shadow: none !important;
+    }
+
+    .content {
+        margin-left: 0 !important;
+        padding: 0 !important;
+    }
+
+    .report-area {
+        display: block !important;
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+    }
+}
+
+
 
 
 
@@ -808,6 +846,10 @@ function mizanGetir() {
             document.getElementById("reportArea").style.display = "block";
             document.getElementById("reportArea").innerHTML = data;
             document.getElementById("pageTitle").innerText = "İki Tarih Arası Mizan";
+
+            setTimeout(function () {
+                mizanKolonResizeAktifEt();
+            }, 100);
         });
 }
 
@@ -840,6 +882,51 @@ function mizanTemizle() {
             document.getElementById("reportArea").innerHTML = data;
             document.getElementById("pageTitle").innerText = "İki Tarih Arası Mizan";
         });
+}
+
+function mizanKolonResizeAktifEt() {
+    const table = document.getElementById("mizanTable");
+    if (!table) return;
+
+    const thElements = table.querySelectorAll("th");
+
+    thElements.forEach(th => {
+        if (th.querySelector(".resize-handle")) return;
+
+        th.style.position = "relative";
+
+        const handle = document.createElement("div");
+        handle.className = "resize-handle";
+        handle.style.position = "absolute";
+        handle.style.top = "0";
+        handle.style.right = "0";
+        handle.style.width = "6px";
+        handle.style.height = "100%";
+        handle.style.cursor = "col-resize";
+        handle.style.userSelect = "none";
+
+        th.appendChild(handle);
+
+        let startX, startWidth;
+
+        handle.addEventListener("mousedown", function (e) {
+            startX = e.pageX;
+            startWidth = th.offsetWidth;
+
+            function onMouseMove(e) {
+                const newWidth = startWidth + (e.pageX - startX);
+                th.style.width = newWidth + "px";
+            }
+
+            function onMouseUp() {
+                document.removeEventListener("mousemove", onMouseMove);
+                document.removeEventListener("mouseup", onMouseUp);
+            }
+
+            document.addEventListener("mousemove", onMouseMove);
+            document.addEventListener("mouseup", onMouseUp);
+        });
+    });
 }
 
 

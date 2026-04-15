@@ -303,11 +303,13 @@ namespace LogoRaporApp.Controllers
             ViewBag.HesapTuru = hesapTuru;
             ViewBag.HareketGormeyenler = hareketGormeyenler;
             ViewBag.BakiyeVermeyenler = bakiyeVermeyenler;
+            
+
+
 
             List<MizanItem> model = new List<MizanItem>();
             Dictionary<string, (decimal Borc, decimal Alacak)> hareketToplamlari = new();
-            List<string> tumHesapKodlari = new List<string>();
-
+            
             var connStr = HttpContext.Session.GetString("db");
             string firmStr = firm.Value.ToString("D3");
             string periodStr = period.Value.ToString("D2");
@@ -315,6 +317,19 @@ namespace LogoRaporApp.Controllers
             using (SqlConnection con = new SqlConnection(connStr))
             {
                 con.Open();
+
+                string firmaAdi = "";
+
+                SqlCommand firmaCmd = new SqlCommand("SELECT NAME FROM L_CAPIFIRM WHERE NR = @nr", con);
+                firmaCmd.Parameters.AddWithValue("@nr", firm.Value);
+
+                var firmaResult = firmaCmd.ExecuteScalar();
+                if (firmaResult != null)
+                {
+                    firmaAdi = Convert.ToString(firmaResult) ?? "";
+                }
+
+
 
                 string hareketSql = $@"
             SELECT ACCOUNTCODE, SUM(DEBIT) AS TOPLAM_BORC, SUM(CREDIT) AS TOPLAM_ALACAK
@@ -375,8 +390,7 @@ namespace LogoRaporApp.Controllers
                     string hesapKodu = dr["CODE"]?.ToString() ?? "";
                     string hesapAdi = dr["DEFINITION_"]?.ToString() ?? "";
 
-                    // Tüm hesap kodlarını listeye ekle
-                    tumHesapKodlari.Add(hesapKodu);
+                   
 
                     if (!string.IsNullOrEmpty(hesapSeviyesi))
                     {
@@ -445,11 +459,14 @@ namespace LogoRaporApp.Controllers
                         Borc = borc,
                         Alacak = alacak,
                         BorcBakiye = borcBakiye,
-                        AlacakBakiye = alacakBakiye
+                        AlacakBakiye = alacakBakiye,
+                        Seviye = HesapSeviyesiBul(hesapKodu)
                     });
+
                 }
 
                 dr.Close();
+                ViewBag.Firma = firm.Value.ToString("D3") + " - " + firmaAdi;
             }
 
             decimal toplamBorc = 0;
@@ -459,7 +476,7 @@ namespace LogoRaporApp.Controllers
 
             foreach (var item in model)
             {
-                if (!AltHesabiVarMi(item.HesapKodu, tumHesapKodlari))
+                if (!item.HesapKodu.Contains("."))
                 {
                     toplamBorc += item.Borc;
                     toplamAlacak += item.Alacak;
@@ -467,6 +484,7 @@ namespace LogoRaporApp.Controllers
                     toplamAlacakBakiye += item.AlacakBakiye;
                 }
             }
+
 
             ViewBag.ToplamBorc = toplamBorc;
             ViewBag.ToplamAlacak = toplamAlacak;
@@ -696,16 +714,20 @@ namespace LogoRaporApp.Controllers
                     ws.Cell(row, 5).Value = item.BorcBakiye;
                     ws.Cell(row, 6).Value = item.AlacakBakiye;
 
-                    toplamBorc += item.Borc;
-                    toplamAlacak += item.Alacak;
-                    toplamBorcBakiye += item.BorcBakiye;
-                    toplamAlacakBakiye += item.AlacakBakiye;
+                    if (!item.HesapKodu.Contains("."))
+                    {
+                        toplamBorc += item.Borc;
+                        toplamAlacak += item.Alacak;
+                        toplamBorcBakiye += item.BorcBakiye;
+                        toplamAlacakBakiye += item.AlacakBakiye;
+                    }
 
                     ws.Range(row, 1, row, 6).Style.Border.OutsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
                     ws.Range(row, 1, row, 6).Style.Border.InsideBorder = ClosedXML.Excel.XLBorderStyleValues.Thin;
 
                     row++;
                 }
+
 
                 ws.Cell(row, 1).Value = "TOPLAM";
                 ws.Range(row, 1, row, 2).Merge();
@@ -743,11 +765,7 @@ namespace LogoRaporApp.Controllers
             }
         }
 
-        /*------------------Mizan Excel Sonu------------------*/
-        private bool AltHesabiVarMi(string hesapKodu, List<string> tumKodlar)
-        {
-            return tumKodlar.Any(k => k.StartsWith(hesapKodu + "."));
-        }
+       
 
 
 
