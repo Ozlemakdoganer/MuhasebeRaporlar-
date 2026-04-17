@@ -8,6 +8,7 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-3">İki Tarih Arası Mizan</h4>
     <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-primary" onclick="gelirTablosuAnaliziKontrol()">Gelir Tablosu Analizi</button>
         <a href="javascript:void(0)" class="btn btn-outline-secondary" onclick="mizanTemizle()">Temizle</a>
         <a class="btn btn-outline-success"
                href="/Home/MizanExcel?baslangicTarihi=@ViewBag.BaslangicTarihi&bitisTarihi=@ViewBag.BitisTarihi&hesapKoduBaslangic=@ViewBag.HesapKoduBaslangic&hesapKoduBitis=@ViewBag.HesapKoduBitis&hesapSeviyesi=@ViewBag.HesapSeviyesi&hesapTuru=@ViewBag.HesapTuru&hareketGormeyenler=@ViewBag.HareketGormeyenler&bakiyeVermeyenler=@ViewBag.BakiyeVermeyenler">
@@ -90,6 +91,18 @@
                             <option value="Listelenmeyecek" selected="@(ViewBag.BakiyeVermeyenler == "Listelenmeyecek" ? "selected" : null)">Listelenmeyecek</option>
                         </select>
                     </div>
+
+                    <div class="col-md-4 mb-3">
+                        <label class="form-label">Kapanış Fişi</label>
+                        <select name="kapanisFisi" class="form-select">
+                            <option value="Dahil" selected="@(ViewBag.KapanisFisi == "Dahil" ? "selected" : null)">Dahil</option>
+                            <option value="Haric" selected="@(ViewBag.KapanisFisi == "Haric" ? "selected" : null)">Hariç</option>
+                        </select>
+                    </div>
+
+
+
+
                 </div>
             </div>
 

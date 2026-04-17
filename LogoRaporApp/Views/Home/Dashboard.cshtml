@@ -509,9 +509,11 @@ else
 
         <div id="financeSubMenu" class="submenu">
             <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); mizanGetir()">📅 İki Tarih Arası Mizan</a>
-            <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); karZararGetir()">📈 Kar Zarar Tablosu</a>
+            <a id="gelirTablosuMenu" class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); gelirTablosuAnaliziGetir()">📑 Gelir Tablosu Analizi</a>
+            <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); karZararGetir()">📈 Gelir Tablosu</a>
             <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); bilancoGetir()">📊 Bilanço</a>
             <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); eEnvanterGetir()">📦 E-Envanter</a>
+            
         </div>
 
         <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); ayarlarGetir()">
@@ -565,26 +567,47 @@ else
 
 
             <div class="row mt-4">
-                <div class="col-md-4 mb-3">
-                    <div class="card-box">
-                        <div style="font-size:28px;">📊</div>
-                        <div class="mt-2">Cari raporları ve bakiye analizleri burada gösterilecek</div>
-                    </div>
-                </div>
+<div class="col-md-4 mb-3">
+    <div class="card-box">
+        <div style="font-size:28px;">📊</div>
+        <div class="mt-2">NET SATIŞLAR</div>
+    </div>
+</div>
 
-                <div class="col-md-4 mb-3">
-                    <div class="card-box">
-                        <div style="font-size:28px;">🧾</div>
-                        <div class="mt-2">Satış faturası özetleri burada gösterilecek</div>
-                    </div>
-                </div>
+<div class="col-md-4 mb-3">
+    <div class="card-box">
+        <div style="font-size:28px;">🧾</div>
+        <div class="mt-2">TOPLAM MALİYETLER</div>
+    </div>
+</div>
 
-                <div class="col-md-4 mb-3">
-                    <div class="card-box">
-                        <div style="font-size:28px;">📦</div>
-                        <div class="mt-2">Satınalma ve stok analizleri burada gösterilecek</div>
-                    </div>
-                </div>
+<div class="col-md-4 mb-3">
+    <div class="card-box">
+        <div style="font-size:28px;">📦</div>
+        <div class="mt-2">DÖNEM NET KARI</div>
+    </div>
+</div>
+
+<div class="col-md-4 mb-3">
+    <div class="card-box">
+        <div style="font-size:28px;">💸</div>
+        <div class="mt-2">VERGİLER TOPLAMI</div>
+    </div>
+</div>
+
+<div class="col-md-4 mb-3">
+    <div class="card-box">
+        <div style="font-size:28px;">👤</div>
+        <div class="mt-2">PERSONEL MAAŞ TOPLAMI</div>
+    </div>
+</div>
+
+<div class="col-md-4 mb-3">
+    <div class="card-box">
+        <div style="font-size:28px;">🏢</div>
+        <div class="mt-2">SABİT KIYMETLER TOPLAMI</div>
+    </div>
+</div>
             </div>
         </div>
 
@@ -800,6 +823,10 @@ else
             document.getElementById("reportArea").style.display = "block";
             document.getElementById("reportArea").innerHTML = data;
             document.getElementById("pageTitle").innerText = "İki Tarih Arası Mizan";
+            setTimeout(function () {
+    mizanKolonResizeAktifEt();
+}, 100);
+
         });
 }
 
@@ -852,6 +879,7 @@ function mizanGetir() {
             }, 100);
         });
 }
+   
 
 function mizanDetayToggle() {
     var alan = document.getElementById("mizanDetayAlan");
@@ -929,8 +957,127 @@ function mizanKolonResizeAktifEt() {
     });
 }
 
+/*---------gelir tablosu analizi---------*/
+
+function gelirTablosuAnaliziGetir() {
+    fetch('/Home/GelirTablosuAnalizi')
+        .then(res => res.text())
+        .then(data => {
+            document.getElementById("welcomeArea").style.display = "none";
+            document.getElementById("reportArea").style.display = "block";
+            document.getElementById("reportArea").innerHTML = data;
+            document.getElementById("pageTitle").innerText = "Gelir Tablosu Analizi";
+
+            var menu = document.getElementById("gelirTablosuMenu");
+            aktifMenuyuIsaretle(menu);
+        });
+}
+/*----------------- gelirTablosuAnaliziKontrol-------*/
+function gelirTablosuAnaliziKontrol() {
+
+    var params = new URLSearchParams();
+
+    var form = document.getElementById("mizanForm");
+    if (form) {
+        var formData = new FormData(form);
+        formData.forEach(function (value, key) {
+            params.append(key, value);
+        });
+    }
+
+    fetch('/Home/MizanTersBakiyeKontrol?' + params.toString())
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.uyariSayisi === 0) {
+                gelirTablosuAnaliziGetir();
+                return;
+            }
+
+            tersBakiyeModalAc(data.uyarilar);
+        });
+}
 
 
+/*----------------- Ters Bakiye Modal Kontrol -------*/
+
+function tersBakiyeModalAc(uyarilar) {
+    var liste = document.getElementById("tersBakiyeListesi");
+    liste.innerHTML = "";
+
+    uyarilar.forEach(function (u) {
+        var div = document.createElement("div");
+        div.style.padding = "6px 0";
+        div.style.borderBottom = "1px solid #e8f0eb";
+        div.innerHTML = "⚠ " + u;
+        liste.appendChild(div);
+    });
+
+    var modal = document.getElementById("tersBakiyeModal");
+    modal.style.display = "flex";
+
+    setTimeout(function () {
+        tersBakiyeTabloVurgula(uyarilar);
+    }, 300);
+}
+
+    
+
+function tersBakiyeModalKapat() {
+    document.getElementById("tersBakiyeModal").style.display = "none";
+}
+
+function tersBakiyeOnaylaVeGec() {
+    tersBakiyeModalKapat();
+    gelirTablosuAnaliziGetir();
+}
+
+
+function tersBakiyeUyarilariKopyala() {
+    var liste = document.getElementById("tersBakiyeListesi");
+    var satirlar = liste.querySelectorAll("div");
+
+    var metin = "TERS BAKİYE UYARILARI\n";
+    metin += "========================\n";
+
+    satirlar.forEach(function (s) {
+        metin += s.innerText + "\n";
+    });
+
+    navigator.clipboard.writeText(metin).then(function () {
+        var btn = document.querySelector("#tersBakiyeModal button");
+        var eskiMetin = btn.innerText;
+        btn.innerText = "✅ Kopyalandı!";
+        setTimeout(function () {
+            btn.innerText = eskiMetin;
+        }, 2000);
+    });
+}
+/*----------------- Ters Bakiye Olan Satırları Vurgula -------*/
+
+function tersBakiyeTabloVurgula(uyarilar) {
+    var table = document.getElementById("mizanTable");
+    if (!table) return;
+
+    var satirlar = table.querySelectorAll("tbody tr");
+
+    // Uyarılardan hesap kodlarını ayıkla
+    var uyariliKodlar = uyarilar.map(function (u) {
+        return u.split(" - ")[0].trim();
+    });
+
+    satirlar.forEach(function (satir) {
+        var hucreler = satir.querySelectorAll("td");
+        if (hucreler.length === 0) return;
+
+        var hesapKodu = hucreler[0].innerText.trim();
+
+        if (uyariliKodlar.includes(hesapKodu)) {
+            satir.style.backgroundColor = "#fdeaea";
+            satir.style.color = "#8b1e1e";
+        }
+    });
+}
 
 
 </script>
@@ -945,6 +1092,85 @@ function mizanKolonResizeAktifEt() {
         Yükleniyor...
     </span>
 
+</div>
+
+<div id="tersBakiyeModal" style="
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.5);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+">
+    <div style="
+        background: white;
+        border-radius: 16px;
+        padding: 32px;
+        max-width: 560px;
+        width: 90%;
+        box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+        max-height: 80vh;
+        overflow-y: auto;
+    ">
+        <div style="display:flex; align-items:center; gap:12px; margin-bottom:16px;">
+            <span style="font-size:28px;">⚠️</span>
+            <h5 style="margin:0; color:#1F7A5A; font-weight:700;">Ters Bakiye Uyarısı</h5>
+        </div>
+
+        <p style="color:#555; font-size:14px; margin-bottom:12px;">
+            Aşağıdaki hesaplarda ters bakiye tespit edildi. Gelir Tablosu Analizi sonuçları etkilenebilir.
+        </p>
+
+        <div id="tersBakiyeListesi" style="
+            background:#f8fbf9;
+            border:1px solid #dcebe2;
+            border-radius:10px;
+            padding:12px 16px;
+            margin-bottom:20px;
+            font-size:13px;
+            color:#333;
+            max-height:280px;
+            overflow-y:auto;
+        ">
+        </div>
+
+        <div style="display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap;">
+    <button onclick="tersBakiyeUyarilariKopyala()" style="
+        padding: 10px 20px;
+        border: 1px solid #1F7A5A;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        font-size: 14px;
+        color: #1F7A5A;
+        font-weight: 600;
+    ">📋 Kopyala</button>
+
+    <button onclick="tersBakiyeModalKapat()" style="
+        padding: 10px 20px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        background: white;
+        cursor: pointer;
+        font-size: 14px;
+        color: #555;
+    ">İptal</button>
+
+    <button onclick="tersBakiyeOnaylaVeGec()" style="
+        padding: 10px 20px;
+        border: none;
+        border-radius: 8px;
+        background: #1F7A5A;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        font-weight: 600;
+    ">Yine de Devam Et</button>
+</div>
+
+    </div>
 </div>
 
 

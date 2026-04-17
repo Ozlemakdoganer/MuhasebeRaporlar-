@@ -1,0 +1,167 @@
+﻿@model List<LogoRaporApp.Models.GelirTablosuItem>
+
+@{
+    Layout = null;
+}
+<style>
+    .gelir-analiz-table {
+        font-size: 12px;
+    }
+
+        .gelir-analiz-table th,
+        .gelir-analiz-table td {
+            padding: 6px 8px;
+            vertical-align: middle;
+        }
+
+        .gelir-analiz-table th {
+            white-space: nowrap;
+        }
+</style>
+
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">GELİR TABLOSU ANALİZ PANELİ</h4>
+
+    <div class="d-flex gap-2">
+        <button type="button" class="btn btn-outline-secondary">Temizle</button>
+        <button type="button" class="btn btn-outline-success">Excel</button>
+        <button type="button" class="btn btn-outline-dark">Yazdır</button>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="mb-3">1. GELİRLER</h5>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped gelir-analiz-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 110px;">Hesap Kodu</th>
+                                <th>Hesap Adı</th>
+                                <th class="text-end" style="width: 120px;">Alacak</th>
+
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @if (Model == null || !Model.Any())
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">Henüz veri hazırlanmadı.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in Model)
+                                {
+                                    <tr class="@(item.KalinMi ? "table-secondary fw-bold toplam-satiri" : "")">
+                                        <td>@item.HesapKodu</td>
+                                        <td>@item.HesapAdi</td>
+                                        <td class="text-end">
+                                            @(string.IsNullOrEmpty(item.HesapAdi) && item.Alacak == 0 ? "" : item.Alacak.ToString("N2"))
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="mb-3">2. GİDERLER</h5>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped gelir-analiz-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 110px;">Hesap Kodu</th>
+                                <th>Hesap Adı</th>
+                                <th class="text-end" style="width: 120px;">Borç</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var giderler = ViewBag.Giderler as List<LogoRaporApp.Models.GelirTablosuItem>;
+                            }
+
+                            @if (giderler == null || !giderler.Any())
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">Henüz veri hazırlanmadı.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in giderler)
+                                {
+                                    <tr class="@(item.KalinMi ? "table-secondary fw-bold toplam-satiri" : "")">
+                                        <td>@item.HesapKodu</td>
+                                        <td>@item.HesapAdi</td>
+                                        <td class="text-end">
+                                            @(string.IsNullOrEmpty(item.HesapAdi) && item.Alacak == 0 ? "" : item.Alacak.ToString("N2"))
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h5 class="mb-3">3. MALİYETİ ETKİLEYEN HESAPLAR</h5>
+
+                <div class="table-responsive">
+                    <table class="table table-bordered table-striped gelir-analiz-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 110px;">Hesap Kodu</th>
+                                <th>Hesap Adı</th>
+                                <th class="text-end" style="width: 120px;">Borç Bakiye</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @{
+                                var maliyetler = ViewBag.MaliyetiEtkileyenler as List<LogoRaporApp.Models.GelirTablosuItem>;
+                            }
+
+                            @if (maliyetler == null || !maliyetler.Any())
+                            {
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted">Henüz veri hazırlanmadı.</td>
+                                </tr>
+                            }
+                            else
+                            {
+                                @foreach (var item in maliyetler)
+                                {
+                                    <tr class="@(item.KalinMi ? "table-secondary fw-bold" : "")">
+                                        <td>@item.HesapKodu</td>
+                                        <td>@item.HesapAdi</td>
+                                        <td class="text-end">
+                                            @(string.IsNullOrEmpty(item.HesapAdi) && item.Alacak == 0 ? "" : item.Alacak.ToString("N2"))
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
