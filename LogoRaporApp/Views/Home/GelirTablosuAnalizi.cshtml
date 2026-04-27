@@ -3,6 +3,7 @@
 @{
     Layout = null;
 }
+
 <style>
     .gelir-analiz-table {
         font-size: 12px;
@@ -17,8 +18,149 @@
         .gelir-analiz-table th {
             white-space: nowrap;
         }
-</style>
 
+    .sonuc-paneli-table {
+        table-layout: fixed;
+        width: 100%;
+    }
+
+        .sonuc-paneli-table th:nth-child(1),
+        .sonuc-paneli-table td:nth-child(1) {
+            width: 52%;
+        }
+
+        .sonuc-paneli-table th:nth-child(2),
+        .sonuc-paneli-table td:nth-child(2) {
+            width: 24%;
+        }
+
+        .sonuc-paneli-table th:nth-child(3),
+        .sonuc-paneli-table td:nth-child(3) {
+            width: 24%;
+        }
+        .sonuc-paneli-table td,
+.sonuc-paneli-table th {
+    padding-top: 8px;
+    padding-bottom: 8px;
+}
+
+.giderler-table tbody tr:not(.table-dark):nth-child(even) td {
+    background-color: #fdeeee;
+}
+.gelirler-table tbody tr:not(.table-dark):nth-child(even) td {
+    background-color: #e6f4eb;
+}
+
+.gelirler-table tbody tr:nth-child(odd) td {
+    background-color: #ffffff;
+}
+.giderler-table tbody tr:not(.table-dark):not(.gider-ara-toplam-satiri):nth-child(even) td {
+    background-color: #fff5f5;
+}
+
+.giderler-table tbody tr:not(.table-dark):not(.gider-ara-toplam-satiri):nth-child(odd) td {
+    background-color: #ffffff;
+}
+
+.giderler-table thead th {
+    background-color: #fbe4e4;
+    color: #8b1e1e;
+    border-bottom: 1px solid #efcaca;
+}
+
+.gelir-ara-toplam-satiri td {
+    background-color: #c7e3d1 !important;
+    color: #000 !important;
+}
+
+.giderler-table tbody tr.gider-ara-toplam-satiri td {
+    background-color: #f7dede !important;
+    color: #000 !important;
+}
+
+.maliyetler-table tbody tr.maliyet-ara-toplam-satiri td {
+    background-color: #f3e7bf !important;
+    color: #000 !important;
+}
+
+.maliyetler-table tbody tr:not(.table-dark):not(.maliyet-ara-toplam-satiri):nth-child(even) td {
+    background-color: #fcf8ec;
+}
+
+.maliyetler-table tbody tr:not(.table-dark):not(.maliyet-ara-toplam-satiri):nth-child(odd) td {
+    background-color: #ffffff;
+}
+.maliyetler-table thead th {
+    background-color: #f3e7bf;
+    color: #6a4d00;
+    border-bottom: 1px solid #e0cf95;
+}
+.sonuc-container {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.sonuc-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 10px;
+    border-radius: 8px;
+    background: #f8fafc;
+    border: 1px solid #e5e7eb;
+    transition: 0.2s;
+}
+
+.sonuc-card:hover {
+    background: #eef2f7;
+}
+
+.sonuc-card .sol {
+    flex: 1;
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.sonuc-card .sag {
+    display: flex;
+    gap: 14px;
+    align-items: center;
+}
+
+.sonuc-card .tutar {
+    min-width: 110px;
+    text-align: right;
+    font-weight: 600;
+    font-size: 13px;
+    line-height: 1.2;
+}
+
+.sonuc-card .oran {
+    min-width: 70px;
+    text-align: right;
+    color: #6b7280;
+    font-size: 12px;
+    line-height: 1.2;
+}
+
+.sonuc-card.vurgulu {
+    background: #e2e8f0;
+    font-weight: 700;
+    border-left: 4px solid #0d6efd;
+}
+
+.sonuc-card.vurgulu .tutar {
+    color: #0d6efd;
+    font-size: 14px;
+}
+
+.sonuc-card.vurgulu .oran {
+    color: #0d6efd;
+}
+
+
+</style>
 
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h4 class="mb-0">GELİR TABLOSU ANALİZ PANELİ</h4>
@@ -30,43 +172,161 @@
     </div>
 </div>
 
+<div class="card mb-4">
+    <div class="card-body">
+
+        <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="mb-0">GELİR TABLOSU SONUÇ PANELİ</h5>
+            <button type="button"
+                    class="btn btn-outline-primary btn-sm"
+                    style="border-radius:50%; width:36px; height:36px; padding:0;"
+                    onclick="var alan = document.getElementById('sonucPaneliDetay'); alan.style.display = (alan.style.display === 'none' ? 'block' : 'none'); this.innerHTML = (alan.style.display === 'block' ? '▾' : '▸');">
+                ▾
+            </button>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-md-20 mb-3" style="width:20%;">
+                <div class="card-box">
+                    <div class="text-muted small">BRÜT SATIŞ KARI / ZARARI</div>
+                    <div style="font-size:22px; font-weight:700; color:#1F7A5A;">
+                        @ViewBag.BrutKarZarar
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-20 mb-3" style="width:20%;">
+                <div class="card-box">
+                    <div class="text-muted small">FAALİYET KARI / ZARARI</div>
+                    <div style="font-size:22px; font-weight:700; color:#1F7A5A;">
+                        @ViewBag.FaaliyetKarZarar
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-20 mb-3" style="width:20%;">
+                <div class="card-box">
+                    <div class="text-muted small">OLAĞAN KARI / ZARARI</div>
+                    <div style="font-size:22px; font-weight:700; color:#1F7A5A;">
+                        @ViewBag.OlaganKarZarar
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-20 mb-3" style="width:20%;">
+                <div class="card-box">
+                    <div class="text-muted small">DÖNEM KARI / ZARARI</div>
+                    <div style="font-size:22px; font-weight:700; color:#1F7A5A;">
+                        @ViewBag.DonemKarZarar
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-20 mb-3" style="width:20%;">
+                <div class="card-box">
+                    <div class="text-muted small">DÖNEM NET KARI / ZARARI</div>
+                    <div style="font-size:22px; font-weight:700; color:#1F7A5A;">
+                        @ViewBag.DonemNetKarZarar
+                    </div>
+                </div>
+            </div>
+        </div>
+
+      <div id="sonucPaneliDetay" class="card p-3" style="max-width:800px; display:none;">
+
+    @{
+        var sonucPaneli = ViewBag.SonucPaneli as List<LogoRaporApp.Models.GelirTablosuSonucItem>;
+    }
+
+    <h5 class="mb-3">📊 Analiz Sonuçları</h5>
+
+    @if (sonucPaneli == null || !sonucPaneli.Any())
+    {
+        <div class="text-center text-muted">Henüz veri hazırlanmadı.</div>
+    }
+    else
+    {
+        <div class="sonuc-container">
+            @foreach (var item in sonucPaneli)
+            {
+                <div class="sonuc-card @(item.KalinMi ? "vurgulu" : "")">
+
+                    <div class="sol">
+                        @item.Aciklama
+                    </div>
+
+                    <div class="sag">
+                        <div class="tutar">@item.Tutar.ToString("N2")</div>
+                        <div class="oran">@item.KarlilikOrani</div>
+                    </div>
+
+                </div>
+            }
+        </div>
+    }
+</div>
+
+    </div>
+</div>
+
+
 <div class="row">
     <div class="col-md-4 mb-3">
         <div class="card h-100">
             <div class="card-body">
                 <h5 class="mb-3">1. GELİRLER</h5>
-
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped gelir-analiz-table">
+                    @{
+    var gelirlerToplamSatiri = Model?.FirstOrDefault(x => x.HesapAdi == "GELİRLER TOPLAMI");
+}
+                    <table class="table table-bordered gelir-analiz-table gelirler-table">
                         <thead>
                             <tr>
                                 <th style="width: 110px;">Hesap Kodu</th>
                                 <th>Hesap Adı</th>
                                 <th class="text-end" style="width: 120px;">Alacak</th>
-
                             </tr>
                         </thead>
                         <tbody>
-                            @if (Model == null || !Model.Any())
-                            {
-                                <tr>
-                                    <td colspan="3" class="text-center text-muted">Henüz veri hazırlanmadı.</td>
-                                </tr>
-                            }
-                            else
-                            {
-                                @foreach (var item in Model)
-                                {
-                                    <tr class="@(item.KalinMi ? "table-secondary fw-bold toplam-satiri" : "")">
-                                        <td>@item.HesapKodu</td>
-                                        <td>@item.HesapAdi</td>
-                                        <td class="text-end">
-                                            @(string.IsNullOrEmpty(item.HesapAdi) && item.Alacak == 0 ? "" : item.Alacak.ToString("N2"))
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                        </tbody>
+    @if (Model == null || !Model.Any())
+    {
+        <tr>
+            <td colspan="3" class="text-center text-muted">Henüz veri hazırlanmadı.</td>
+        </tr>
+    }
+    else
+    {
+        @foreach (var item in Model.Where(x => x.HesapAdi != "GELİRLER TOPLAMI"))
+        {
+            <tr class="@(item.HesapAdi == "GELİRLER TOPLAMI" ? "table-dark fw-bold" : item.KalinMi ? "gelir-ara-toplam-satiri fw-bold" : "")">
+                <td>@item.HesapKodu</td>
+                <td>@item.HesapAdi</td>
+                <td class="text-end">
+                    @(string.IsNullOrEmpty(item.HesapAdi) && item.Alacak == 0 ? "" : item.Alacak.ToString("N2"))
+                </td>
+            </tr>
+        }
+    }
+</tbody>
+<tfoot>
+    @if (gelirlerToplamSatiri != null)
+    {
+        <tr>
+            <td colspan="3" style="height:32px; border:none; background:transparent;"></td>
+        </tr>
+        <tr>
+            <td colspan="3" style="height:32px; border:none; background:transparent;"></td>
+        </tr>
+        <tr class="table-dark fw-bold">
+            <td></td>
+            <td>GELİRLER TOPLAMI</td>
+            <td class="text-end">@gelirlerToplamSatiri.Alacak.ToString("N2")</td>
+        </tr>
+    }
+</tfoot>
+
+
+
                     </table>
                 </div>
             </div>
@@ -79,7 +339,7 @@
                 <h5 class="mb-3">2. GİDERLER</h5>
 
                 <div class="table-responsive">
-                    <table class="table table-bordered table-striped gelir-analiz-table">
+                    <table class="table table-bordered gelir-analiz-table giderler-table">
                         <thead>
                             <tr>
                                 <th style="width: 110px;">Hesap Kodu</th>
@@ -101,15 +361,16 @@
                             else
                             {
                                 @foreach (var item in giderler)
-                                {
-                                    <tr class="@(item.KalinMi ? "table-secondary fw-bold toplam-satiri" : "")">
-                                        <td>@item.HesapKodu</td>
-                                        <td>@item.HesapAdi</td>
-                                        <td class="text-end">
-                                            @(string.IsNullOrEmpty(item.HesapAdi) && item.Alacak == 0 ? "" : item.Alacak.ToString("N2"))
-                                        </td>
-                                    </tr>
-                                }
+{
+    <tr class="@(item.HesapAdi == "GİDERLER TOPLAMI" ? "table-dark fw-bold" : item.KalinMi ? "gider-ara-toplam-satiri fw-bold" : "")">
+        <td>@item.HesapKodu</td>
+        <td>@item.HesapAdi</td>
+        <td class="text-end">
+            @(string.IsNullOrEmpty(item.HesapAdi) && item.Alacak == 0 ? "" : item.Alacak.ToString("N2"))
+        </td>
+    </tr>
+}
+
                             }
                         </tbody>
                     </table>
@@ -117,51 +378,67 @@
             </div>
         </div>
     </div>
-
 
     <div class="col-md-4 mb-3">
-        <div class="card h-100">
-            <div class="card-body">
-                <h5 class="mb-3">3. MALİYETİ ETKİLEYEN HESAPLAR</h5>
+    <div class="card h-100">
+        <div class="card-body">
+            <h5 class="mb-3">3. MALİYETİ ETKİLEYEN HESAPLAR</h5>
 
-                <div class="table-responsive">
-                    <table class="table table-bordered table-striped gelir-analiz-table">
-                        <thead>
+            <div class="table-responsive">
+                @{
+                    var maliyetler = ViewBag.MaliyetiEtkileyenler as List<LogoRaporApp.Models.GelirTablosuItem>;
+                    var maliyetlerToplamSatiri = maliyetler?.FirstOrDefault(x => x.HesapAdi == "OLASI GİDERLER TOPLAMI");
+                }
+
+                <table class="table table-bordered gelir-analiz-table maliyetler-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 110px;">Hesap Kodu</th>
+                            <th>Hesap Adı</th>
+                            <th class="text-end" style="width: 120px;">Borç Bakiye</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (maliyetler == null || !maliyetler.Any())
+                        {
                             <tr>
-                                <th style="width: 110px;">Hesap Kodu</th>
-                                <th>Hesap Adı</th>
-                                <th class="text-end" style="width: 120px;">Borç Bakiye</th>
+                                <td colspan="3" class="text-center text-muted">Henüz veri hazırlanmadı.</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            @{
-                                var maliyetler = ViewBag.MaliyetiEtkileyenler as List<LogoRaporApp.Models.GelirTablosuItem>;
-                            }
-
-                            @if (maliyetler == null || !maliyetler.Any())
+                        }
+                        else
+                        {
+                            @foreach (var item in maliyetler.Where(x => x.HesapAdi != "OLASI GİDERLER TOPLAMI"))
                             {
-                                <tr>
-                                    <td colspan="3" class="text-center text-muted">Henüz veri hazırlanmadı.</td>
+                                <tr class="@(item.HesapAdi == "OLASI GİDERLER TOPLAMI" ? "table-dark fw-bold" : item.KalinMi ? "maliyet-ara-toplam-satiri fw-bold" : "")">
+                                    <td>@item.HesapKodu</td>
+                                    <td>@item.HesapAdi</td>
+                                    <td class="text-end">
+                                        @(string.IsNullOrEmpty(item.HesapAdi) && item.Alacak == 0 ? "" : item.Alacak.ToString("N2"))
+                                    </td>
                                 </tr>
                             }
-                            else
-                            {
-                                @foreach (var item in maliyetler)
-                                {
-                                    <tr class="@(item.KalinMi ? "table-secondary fw-bold" : "")">
-                                        <td>@item.HesapKodu</td>
-                                        <td>@item.HesapAdi</td>
-                                        <td class="text-end">
-                                            @(string.IsNullOrEmpty(item.HesapAdi) && item.Alacak == 0 ? "" : item.Alacak.ToString("N2"))
-                                        </td>
-                                    </tr>
-                                }
-                            }
-                        </tbody>
-                    </table>
-                </div>
+                        }
+                    </tbody>
+                    <tfoot>
+                        @if (maliyetlerToplamSatiri != null)
+                        {
+                            <tr>
+                                <td colspan="3" style="height:32px; border:none; background:transparent;"></td>
+                            </tr>
+                            <tr>
+                                <td colspan="3" style="height:32px; border:none; background:transparent;"></td>
+                            </tr>
+                            <tr class="table-dark fw-bold">
+                                <td></td>
+                                <td>OLASI GİDERLER TOPLAMI</td>
+                                <td class="text-end">@maliyetlerToplamSatiri.Alacak.ToString("N2")</td>
+                            </tr>
+                        }
+                    </tfoot>
+                </table>
             </div>
         </div>
     </div>
+</div>
 
 </div>

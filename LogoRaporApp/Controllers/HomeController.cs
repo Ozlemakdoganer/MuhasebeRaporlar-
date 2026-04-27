@@ -1,11 +1,14 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Data.SqlClient;
+﻿using ClosedXML.Excel;
 using LogoRaporApp.Models;
+using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using System.Data;
-using System.Linq;
 using System.IO;
-using ClosedXML.Excel;
+using System.Linq;
+using System.Text.Json;
+
+
 
 
 
@@ -86,6 +89,13 @@ namespace LogoRaporApp.Controllers
     HttpContext.Session.GetInt32("period") != null;
 
                 HttpContext.Session.SetString("db", connStr);
+                SaveDbSettingsToFile(new SavedDbSetting
+                {
+                    Server = model.Server,
+                    Database = model.Database,
+                    Username = model.Username
+                });
+
                 HttpContext.Session.Remove("firm");
                 HttpContext.Session.Remove("period");
 
@@ -740,35 +750,25 @@ namespace LogoRaporApp.Controllers
         //---------DATABASE SETTINGS------------
 
         
-        [HttpGet]
+        [HttpGet]        
         public IActionResult DbSettings()
         {
             if (HttpContext.Session.GetString("user") == null)
                 return RedirectToAction("Login", "Account");
 
-            var model = new DbSetting();
+            var saved = LoadDbSettingsFromFile();
 
-            var connStr = HttpContext.Session.GetString("db");
-
-            if (!string.IsNullOrEmpty(connStr))
+            var model = new DbSetting
             {
-                var parts = connStr.Split(';', StringSplitOptions.RemoveEmptyEntries);
-
-                foreach (var part in parts)
-                {
-                    if (part.StartsWith("Server=", StringComparison.OrdinalIgnoreCase))
-                        model.Server = part.Substring("Server=".Length);
-
-                    if (part.StartsWith("Database=", StringComparison.OrdinalIgnoreCase))
-                        model.Database = part.Substring("Database=".Length);
-
-                    if (part.StartsWith("User Id=", StringComparison.OrdinalIgnoreCase))
-                        model.Username = part.Substring("User Id=".Length);
-                }
-            }
+                Server = saved.Server,
+                Database = saved.Database,
+                Username = saved.Username,
+                Password = ""
+            };
 
             return View(model);
         }
+
 
         [HttpGet]
         //---------SATIS FATURALARI ACTION---------
@@ -1338,9 +1338,149 @@ namespace LogoRaporApp.Controllers
 
             ViewBag.MaliyetiEtkileyenler = maliyetiEtkileyenler;
 
+            List<GelirTablosuSonucItem> sonucPaneli = new List<GelirTablosuSonucItem>();
+
+            decimal brutSatisKarZarar = gelirlerToplami - satisMaliyetiToplami;
+            decimal faaliyetKarZarar = brutSatisKarZarar - faaliyetGiderToplami;
+            decimal olaganKarZarar = faaliyetKarZarar - finansmanGiderToplami;
+            decimal donemKarZarar = olaganKarZarar - digerGiderToplami;
+
+            // Şimdilik vergi karşılığı 0 bırakıyoruz
+            decimal vergiKarsiligi = donemKarZarar*0.25m;
+            decimal donemNetKarZarar = donemKarZarar - vergiKarsiligi;
+
+            string Oran(decimal tutar)
+            {
+                if (netSatislarToplami == 0)
+                    return "-";
+
+                return ((tutar / netSatislarToplami) * 100).ToString("N2") + " %";
+            }
+
+            sonucPaneli.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = "Net Satışların Toplamı",
+                Tutar = gelirlerToplami,
+                KarlilikOrani = Oran(gelirlerToplami),
+                KalinMi = false
+            });
+
+            sonucPaneli.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = "Satışların Maliyeti",
+                Tutar = satisMaliyetiToplami,
+                KarlilikOrani = Oran(satisMaliyetiToplami),
+                KalinMi = false
+            });
+
+            sonucPaneli.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = "BRÜT SATIŞ KARI VEYA ZARARI",
+                Tutar = brutSatisKarZarar,
+                KarlilikOrani = Oran(brutSatisKarZarar),
+                KalinMi = true
+            });
+
+            sonucPaneli.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = "Faaliyet Giderleri",
+                Tutar = faaliyetGiderToplami,
+                KarlilikOrani = Oran(faaliyetGiderToplami),
+                KalinMi = false
+            });
+
+            sonucPaneli.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = "FAALİYET KARI VEYA ZARARI",
+                Tutar = faaliyetKarZarar,
+                KarlilikOrani = Oran(faaliyetKarZarar),
+                KalinMi = true
+            });
+
+            sonucPaneli.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = "Finansman Giderleri",
+                Tutar = finansmanGiderToplami,
+                KarlilikOrani = Oran(finansmanGiderToplami),
+                KalinMi = false
+            });
+
+            sonucPaneli.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = "OLAĞAN KARI VEYA ZARARI",
+                Tutar = olaganKarZarar,
+                KarlilikOrani = Oran(olaganKarZarar),
+                KalinMi = true
+            });
+
+            sonucPaneli.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = "Olağandışı Gider ve Zararlar",
+                Tutar = digerGiderToplami,
+                KarlilikOrani = Oran(digerGiderToplami),
+                KalinMi = false
+            });
+
+            sonucPaneli.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = "DÖNEM KARI VEYA ZARARI",
+                Tutar = donemKarZarar,
+                KarlilikOrani = Oran(donemKarZarar),
+                KalinMi = true
+            });
+
+            sonucPaneli.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = "Vergi Karşılığı",
+                Tutar = vergiKarsiligi,
+                KarlilikOrani = Oran(vergiKarsiligi),
+                KalinMi = false
+            });
+
+            sonucPaneli.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = "DÖNEM NET KARI VEYA ZARARI",
+                Tutar = donemNetKarZarar,
+                KarlilikOrani = Oran(donemNetKarZarar),
+                KalinMi = true
+            });
+
+            ViewBag.SonucPaneli = sonucPaneli;
+            ViewBag.BrutKarZarar = brutSatisKarZarar.ToString("N2");
+            ViewBag.FaaliyetKarZarar = faaliyetKarZarar.ToString("N2");
+            ViewBag.OlaganKarZarar = olaganKarZarar.ToString("N2");
+            ViewBag.DonemKarZarar = donemKarZarar.ToString("N2");
+            ViewBag.DonemNetKarZarar = donemNetKarZarar.ToString("N2");
 
 
             return View(gelirler);
+        }
+
+        /*-----------------Yardımcı Metodlar-----------------*/
+        private string GetDbSettingsFilePath()
+        {
+            return Path.Combine(Directory.GetCurrentDirectory(), "dbsettings.json");
+        }
+
+        private void SaveDbSettingsToFile(SavedDbSetting model)
+        {
+            var json = JsonSerializer.Serialize(model);
+            System.IO.File.WriteAllText(GetDbSettingsFilePath(), json);
+        }
+
+        private SavedDbSetting LoadDbSettingsFromFile()
+        {
+            var path = GetDbSettingsFilePath();
+
+            if (!System.IO.File.Exists(path))
+                return new SavedDbSetting();
+
+            var json = System.IO.File.ReadAllText(path);
+
+            if (string.IsNullOrWhiteSpace(json))
+                return new SavedDbSetting();
+
+            return JsonSerializer.Deserialize<SavedDbSetting>(json) ?? new SavedDbSetting();
         }
 
 
