@@ -71,6 +71,16 @@ namespace LogoRaporApp.Controllers
         }
 
         [HttpPost]
+        public IActionResult UpdateUser(string username, string fullName, string role)
+        {
+            if (!IsLoggedIn()) return Content("LOGIN");
+            if (!IsAdmin()) return Content("UNAUTHORIZED");
+
+            var result = _userService.UpdateUser(username, fullName, role);
+            return Content(result ? "SUCCESS" : "NOT_FOUND");
+        }
+
+        [HttpPost]
         public IActionResult ChangePassword(string username, string newPassword)
         {
             if (!IsLoggedIn()) return Content("LOGIN");

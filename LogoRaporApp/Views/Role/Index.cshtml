@@ -46,7 +46,7 @@ else
                 </div>
 
                 <div class="row">
-                    @foreach (var report in allReports)
+                    @foreach (var report in allReports ?? new List<string>())
                     {
                         <div class="col-md-3 mb-2">
                             <div class="form-check">
@@ -110,7 +110,7 @@ else
             .then(res => res.text())
             .then(data => {
                 if (data === "SUCCESS") {
-                    location.reload();
+                    rolYonetimiGetir();
                 } else if (data === "DUPLICATE") {
                     document.getElementById("rolEkleHata").style.display = "block";
                     document.getElementById("rolEkleHata").innerText = "Bu rol zaten mevcut.";

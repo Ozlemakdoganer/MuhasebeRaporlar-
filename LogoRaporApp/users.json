@@ -2,7 +2,7 @@
   "Users": [
     {
       "Username": "admin",
-      "PasswordHash": "$2a$11$sjGf0UhhDq0CRDfckGmJJedkl.U4al8LIQZLwc0chbld2Fn7rUUr.",
+      "PasswordHash": "$2a$11$WwyaeZyFgVyy/LNp4noyh.0gDTVklRG2gmHlSCFJy7Aab4qQskjQu",
       "FullName": "Admin Kullan\u0131c\u0131",
       "Role": "Admin"
     },
@@ -10,13 +10,13 @@
       "Username": "ahmet",
       "PasswordHash": "$2a$11$Iw43au0ZWr1k4ZZRHbZPXuA8heLj/SIoQYWCKno1U9wjFMDqo./9K",
       "FullName": "Ahmet emen",
-      "Role": "User"
+      "Role": "Muhasebe"
     },
     {
       "Username": "Habibe",
       "PasswordHash": "$2a$11$x9bUNkWnqoRTpV9lYIaIeebTG.6FI0I31ZNAWQpuCRQpau9ZbIZv.",
       "FullName": "Habibe Macit",
-      "Role": "User"
+      "Role": "Sat\u0131nalma"
     },
     {
       "Username": "logo",
@@ -34,7 +34,13 @@
       "Username": "rukiye",
       "PasswordHash": "$2a$11$1XH8fMgGA2eTLNcKzuw8r.XziDGE7Vg5YZIzQ4nHMkdoFQnPiAxMS",
       "FullName": "rukiye \u015Fara",
-      "Role": "Sat\u0131nalma"
+      "Role": "Muhasebe"
+    },
+    {
+      "Username": "deneme",
+      "PasswordHash": "$2a$11$mlu1COAbxIHNQwLMLAyPjuJp4nGwiKeDbHa1OcnfZ8Da8LXrcCotO",
+      "FullName": "deneme",
+      "Role": "Admin"
     }
   ]
 }

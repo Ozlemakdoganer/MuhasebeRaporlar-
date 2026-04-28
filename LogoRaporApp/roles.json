@@ -20,9 +20,12 @@
         "Mizan",
         "GelirTablosuAnalizi",
         "GelirTablosu",
-        "Bilanco",
-        "EEnvanter"
+        "Bilanco"
       ]
+    },
+    {
+      "Name": "deneme",
+      "Permissions": []
     }
   ]
 }

@@ -4,7 +4,10 @@
 }
 
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h4 class="mb-0">Kullanıcı Yönetimi</h4>
+    <div class="d-flex align-items-center gap-2">
+        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="ayarlarGetir()">← Geri</button>
+        <h4 class="mb-0">Kullanıcı Yönetimi</h4>
+    </div>
     <button type="button" class="btn btn-primary" onclick="yeniKullaniciFormAc()">+ Yeni Kullanıcı</button>
 </div>
 
@@ -40,6 +43,8 @@
     </div>
 </div>
 
+
+
 @* Kullanıcı listesi *@
 <div class="card">
     <div class="card-body">
@@ -49,7 +54,7 @@
                     <th>Kullanıcı Adı</th>
                     <th>Ad Soyad</th>
                     <th>Rol</th>
-                    <th style="width:200px;">İşlemler</th>
+                    <th style="width:280px;">İşlemler</th>
                 </tr>
             </thead>
             <tbody>
@@ -60,14 +65,20 @@
                         <td>@user.FullName</td>
                         <td>@user.Role</td>
                         <td>
-                            <button type="button" class="btn btn-outline-primary btn-sm"
-                                    onclick="sifreDegistirFormAc('@user.Username')">
-                                Şifre Değiştir
-                            </button>
-                            <button type="button" class="btn btn-outline-danger btn-sm"
-                                    onclick="kullaniciSil('@user.Username')">
-                                Sil
-                            </button>
+                            <div class="d-flex gap-1 flex-nowrap">
+                                <button type="button" class="btn btn-outline-success btn-sm"
+                                        onclick="guncelleFormAc('@user.Username', '@user.FullName', '@user.Role')">
+                                    Güncelle
+                                </button>
+                                <button type="button" class="btn btn-outline-primary btn-sm"
+                                        onclick="sifreDegistirFormAc('@user.Username')">
+                                    Şifre Değiştir
+                                </button>
+                                <button type="button" class="btn btn-outline-danger btn-sm"
+                                        onclick="kullaniciSil('@user.Username')">
+                                    Sil
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 }
@@ -75,6 +86,30 @@
         </table>
     </div>
 </div>
+@* Guncelle modal *@
+<div id="guncelleModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:16px; padding:32px; max-width:400px; width:90%;">
+        <h5 class="mb-3">Kullanıcı Güncelle</h5>
+        <input type="hidden" id="guncelleUsername" />
+        <div class="mb-3">
+            <label class="form-label">Ad Soyad</label>
+            <input type="text" id="guncelleFullName" class="form-control" />
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Rol</label>
+            <select id="guncelleRole" class="form-select">
+                <option value="Admin">Admin</option>
+            </select>
+        </div>
+        <div id="guncelleHata" class="text-danger mb-2" style="display:none;"></div>
+        <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-outline-secondary" onclick="guncelleModalKapat()">İptal</button>
+            <button type="button" class="btn btn-primary" onclick="kullaniciGuncelle()">Kaydet</button>
+        </div>
+    </div>
+</div>
+
 
 @* Şifre değiştir modal *@
 <div id="sifreModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
@@ -136,7 +171,7 @@
             .then(res => res.text())
             .then(data => {
                 if (data === "SUCCESS") {
-                    location.reload();
+                    kullaniciYonetimiGetir();
                 } else if (data === "DUPLICATE") {
                     document.getElementById("ekleHata").style.display = "block";
                     document.getElementById("ekleHata").innerText = "Bu kullanıcı adı zaten mevcut.";
@@ -171,6 +206,59 @@
 
     function sifreModalKapat() {
         document.getElementById("sifreModal").style.display = "none";
+    }
+
+        function guncelleFormAc(username, fullName, role) {
+        document.getElementById("guncelleUsername").value = username;
+        document.getElementById("guncelleFullName").value = fullName;
+        document.getElementById("guncelleHata").style.display = "none";
+
+        // Rolleri yükle
+        fetch('/Role/GetRoles')
+            .then(res => res.json())
+            .then(data => {
+                var select = document.getElementById("guncelleRole");
+                select.innerHTML = '<option value="Admin">Admin</option>';
+                data.forEach(function (roleName) {
+                    var option = document.createElement("option");
+                    option.value = roleName;
+                    option.innerText = roleName;
+                    select.appendChild(option);
+                });
+                select.value = role;
+            });
+
+        document.getElementById("guncelleModal").style.display = "flex";
+    }
+
+    function guncelleModalKapat() {
+        document.getElementById("guncelleModal").style.display = "none";
+    }
+
+    function kullaniciGuncelle() {
+        var username = document.getElementById("guncelleUsername").value;
+        var fullName = document.getElementById("guncelleFullName").value.trim();
+        var role = document.getElementById("guncelleRole").value;
+
+        if (!fullName) {
+            document.getElementById("guncelleHata").style.display = "block";
+            document.getElementById("guncelleHata").innerText = "Ad Soyad boş olamaz.";
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append("username", username);
+        formData.append("fullName", fullName);
+        formData.append("role", role);
+
+        fetch('/User/UpdateUser', { method: 'POST', body: formData })
+            .then(res => res.text())
+            .then(data => {
+                if (data === "SUCCESS") {
+                    guncelleModalKapat();
+                    kullaniciYonetimiGetir();
+                }
+            });
     }
 
     function sifreDegistir() {

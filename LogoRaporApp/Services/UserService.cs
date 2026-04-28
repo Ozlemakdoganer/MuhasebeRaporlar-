@@ -64,6 +64,21 @@ namespace LogoRaporApp.Services
             return true;
         }
 
+        public bool UpdateUser(string username, string fullName, string role)
+        {
+            var users = ReadUsers();
+            var user = users.FirstOrDefault(u =>
+                u.Username.Equals(username, StringComparison.OrdinalIgnoreCase));
+
+            if (user == null)
+                return false;
+
+            user.FullName = fullName;
+            user.Role = role;
+            WriteUsers(users);
+            return true;
+        }
+
         public bool DeleteUser(string username)
         {
             var users = ReadUsers();
@@ -98,8 +113,11 @@ namespace LogoRaporApp.Services
         }
     }
 
+
+
     public class UserFileModel
     {
         public List<User> Users { get; set; } = new();
     }
+
 }

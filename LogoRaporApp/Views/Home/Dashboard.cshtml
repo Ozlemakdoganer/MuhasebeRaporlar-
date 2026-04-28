@@ -1,6 +1,14 @@
 ﻿@{
+    var permissions = ViewBag.Permissions as List<string>;
+    bool canSee(string report) =>
+        ViewBag.Role == "Admin" || (permissions != null && permissions.Contains(report));
+}
+
+@{
     Layout = null;
 }
+
+
 
 <!DOCTYPE html>
 <html>
@@ -443,78 +451,88 @@
 
 
     <div class="sidebar-menu">
-       @if (ViewBag.CanUseReports == true)
-{
-    <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); cariGetir()">
-        <span>📊</span>
-        <span class="menu-text">Cari Hesap Raporları</span>         
-    </a>
-}
-else
-{
-    <a class="menu-item disabled-menu" href="javascript:void(0)">
-        <span>📊</span>
-        <span class="menu-text">Cari Hesap Raporları</span>
-    </a>
-}
+            @if (ViewBag.CanUseReports == true && canSee("CariEkstre"))
+            {
+                <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); cariGetir()">
+                    <span>📊</span>
+                    <span class="menu-text">Cari Hesap Raporları</span>
+                </a>
+            }
+            else
+            {
+                <a class="menu-item disabled-menu" href="javascript:void(0)">
+                    <span>📊</span>
+                    <span class="menu-text">Cari Hesap Raporları</span>
+                </a>
+            }
 
+            @if (ViewBag.CanUseReports == true && canSee("SatisFaturalari"))
+            {
+                <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); satisFaturalariDokumuGetir()">
+                    <span>🧾</span>
+                    <span class="menu-text">Satış Faturaları Dökümü</span>
+                </a>
+            }
+            else
+            {
+                <a class="menu-item disabled-menu" href="javascript:void(0)">
+                    <span>🧾</span>
+                    <span class="menu-text">Satış Faturaları Dökümü</span>
+                </a>
+            }
 
-        @if (ViewBag.CanUseReports == true)
-{
-    <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); satisFaturalariDokumuGetir()">
-        <span>🧾</span>
-        <span class="menu-text">Satış Faturaları Dökümü</span>
-    </a>
-}
-else
-{
-    <a class="menu-item disabled-menu" href="javascript:void(0)">
-        <span>🧾</span>
-        <span class="menu-text">Satış Faturaları Dökümü</span>
-    </a>
-}
+            @if (ViewBag.CanUseReports == true && canSee("SatinAlmaFaturalari"))
+            {
+                <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); satinAlmaFaturalariDokumuGetir()">
+                    <span>📦</span>
+                    <span class="menu-text">Satınalma Faturaları Dökümü</span>
+                </a>
+            }
+            else
+            {
+                <a class="menu-item disabled-menu" href="javascript:void(0)">
+                    <span>📦</span>
+                    <span class="menu-text">Satınalma Faturaları Dökümü</span>
+                </a>
+            }
 
+            @if (ViewBag.CanUseReports == true && (canSee("Mizan") || canSee("GelirTablosuAnalizi") || canSee("GelirTablosu") || canSee("Bilanco") || canSee("EEnvanter")))
+            {
+                <a class="menu-item" href="javascript:void(0);" onclick="toggleMenu()">
+                    <span>💰</span>
+                    <span class="menu-text">Mali Veriler ▾</span>
+                </a>
 
-        @if (ViewBag.CanUseReports == true)
-{
-    <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); satinAlmaFaturalariDokumuGetir()">
-        <span>📦</span>
-        <span class="menu-text">Satınalma Faturaları Dökümü</span>
-    </a>
-}
-else
-{
-    <a class="menu-item disabled-menu" href="javascript:void(0)">
-        <span>📦</span>
-        <span class="menu-text">Satınalma Faturaları Dökümü</span>
-    </a>
-}
-
-
-        @if (ViewBag.CanUseReports == true)
-{
-    <a class="menu-item" href="javascript:void(0);" onclick="toggleMenu()">
-        <span>💰</span>
-        <span class="menu-text">Mali Veriler ▾</span>
-    </a>
-}
-else
-{
-    <a class="menu-item disabled-menu" href="javascript:void(0)">
-        <span>💰</span>
-        <span class="menu-text">Mali Veriler ▾</span>
-    </a>
-}
-
-
-        <div id="financeSubMenu" class="submenu">
-            <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); mizanGetir()">📅 İki Tarih Arası Mizan</a>
-            <a id="gelirTablosuMenu" class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); gelirTablosuAnaliziGetir()">📑 Gelir Tablosu Analizi</a>
-            <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); karZararGetir()">📈 Gelir Tablosu</a>
-            <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); bilancoGetir()">📊 Bilanço</a>
-            <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); eEnvanterGetir()">📦 E-Envanter</a>
-            
-        </div>
+                <div id="financeSubMenu" class="submenu">
+                    @if (canSee("Mizan"))
+                    {
+                        <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); mizanGetir()">📅 İki Tarih Arası Mizan</a>
+                    }
+                    @if (canSee("GelirTablosuAnalizi"))
+                    {
+                        <a id="gelirTablosuMenu" class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); gelirTablosuAnaliziGetir()">📑 Gelir Tablosu Analizi</a>
+                    }
+                    @if (canSee("GelirTablosu"))
+                    {
+                        <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); karZararGetir()">📈 Gelir Tablosu</a>
+                    }
+                    @if (canSee("Bilanco"))
+                    {
+                        <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); bilancoGetir()">📊 Bilanço</a>
+                    }
+                    @if (canSee("EEnvanter"))
+                    {
+                        <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); eEnvanterGetir()">📦 E-Envanter</a>
+                    }
+                </div>
+            }
+            else
+            {
+                <a class="menu-item disabled-menu" href="javascript:void(0)">
+                    <span>💰</span>
+                    <span class="menu-text">Mali Veriler ▾</span>
+                </a>
+            }
 
         <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); ayarlarGetir()">
             <span>⚙</span>
