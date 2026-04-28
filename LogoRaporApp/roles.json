@@ -1,0 +1,28 @@
+{
+  "Roles": [
+    {
+      "Name": "Sat\u0131\u015F",
+      "Permissions": [
+        "CariEkstre",
+        "SatisFaturalari"
+      ]
+    },
+    {
+      "Name": "Sat\u0131nalma",
+      "Permissions": [
+        "CariEkstre",
+        "SatinAlmaFaturalari"
+      ]
+    },
+    {
+      "Name": "Muhasebe",
+      "Permissions": [
+        "Mizan",
+        "GelirTablosuAnalizi",
+        "GelirTablosu",
+        "Bilanco",
+        "EEnvanter"
+      ]
+    }
+  ]
+}

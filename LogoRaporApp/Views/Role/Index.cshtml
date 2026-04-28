@@ -1,0 +1,159 @@
+﻿@model List<LogoRaporApp.Models.Role>
+@{
+    Layout = null;
+    var allReports = ViewBag.AllReports as List<string>;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Rol Yönetimi</h4>
+    <button type="button" class="btn btn-primary" onclick="yeniRolFormAc()">+ Yeni Rol</button>
+</div>
+
+@* Yeni rol formu *@
+<div id="yeniRolForm" class="card mb-4" style="display:none;">
+    <div class="card-body">
+        <h5 class="mb-3">Yeni Rol Ekle</h5>
+        <div class="d-flex gap-2 align-items-end">
+            <div>
+                <label class="form-label">Rol Adı</label>
+                <input type="text" id="yeniRolAdi" class="form-control" placeholder="Örn: Muhasebe" />
+            </div>
+            <button type="button" class="btn btn-primary" onclick="rolEkle()">Ekle</button>
+        </div>
+        <div id="rolEkleHata" class="text-danger mt-2" style="display:none;"></div>
+    </div>
+</div>
+
+@* Rol listesi *@
+@if (Model == null || !Model.Any())
+{
+    <div class="card">
+        <div class="card-body text-muted">Henüz rol eklenmemiş.</div>
+    </div>
+}
+else
+{
+    @foreach (var role in Model)
+    {
+        <div class="card mb-3" id="rol_@role.Name">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <h5 class="mb-0">@role.Name</h5>
+                    <button type="button" class="btn btn-outline-danger btn-sm"
+                            onclick="rolSil('@role.Name')">
+                        Sil
+                    </button>
+                </div>
+
+                <div class="row">
+                    @foreach (var report in allReports)
+                    {
+                        <div class="col-md-3 mb-2">
+                            <div class="form-check">
+                                <input class="form-check-input"
+                                       type="checkbox"
+                                       id="@(role.Name)_@report"
+                                       value="@report"
+                                @(role.Permissions.Contains(report) ? "checked" : "") />
+                                <label class="form-check-label" for="@(role.Name)_@report">
+                                    @ReportAdi(report)
+                                </label>
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                <button type="button" class="btn btn-primary btn-sm mt-3"
+                        onclick="rolKaydet('@role.Name')">
+                    Kaydet
+                </button>
+                <span id="kaydetMesaj_@role.Name" class="text-success ms-2" style="display:none;">✅ Kaydedildi</span>
+            </div>
+        </div>
+    }
+}
+
+@functions {
+    string ReportAdi(string key) => key switch
+    {
+        "CariEkstre" => "Cari Ekstre",
+        "SatisFaturalari" => "Satış Faturaları",
+        "SatinAlmaFaturalari" => "Satınalma Faturaları",
+        "Mizan" => "İki Tarih Arası Mizan",
+        "GelirTablosuAnalizi" => "Gelir Tablosu Analizi",
+        "GelirTablosu" => "Gelir Tablosu",
+        "Bilanco" => "Bilanço",
+        "EEnvanter" => "E-Envanter",
+        _ => key
+    };
+}
+
+<script>
+    function yeniRolFormAc() {
+        var form = document.getElementById("yeniRolForm");
+        form.style.display = form.style.display === "none" ? "block" : "none";
+    }
+
+    function rolEkle() {
+        var name = document.getElementById("yeniRolAdi").value.trim();
+
+        if (!name) {
+            document.getElementById("rolEkleHata").style.display = "block";
+            document.getElementById("rolEkleHata").innerText = "Rol adı boş olamaz.";
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append("name", name);
+
+        fetch('/Role/AddRole', { method: 'POST', body: formData })
+            .then(res => res.text())
+            .then(data => {
+                if (data === "SUCCESS") {
+                    location.reload();
+                } else if (data === "DUPLICATE") {
+                    document.getElementById("rolEkleHata").style.display = "block";
+                    document.getElementById("rolEkleHata").innerText = "Bu rol zaten mevcut.";
+                }
+            });
+    }
+
+    function rolKaydet(roleName) {
+        var checkboxes = document.querySelectorAll('#rol_' + roleName + ' input[type=checkbox]');
+        var permissions = [];
+
+        checkboxes.forEach(function (cb) {
+            if (cb.checked) permissions.push(cb.value);
+        });
+
+        var formData = new FormData();
+        formData.append("name", roleName);
+        formData.append("permissionsJson", JSON.stringify(permissions));
+
+        fetch('/Role/UpdateRole', { method: 'POST', body: formData })
+            .then(res => res.text())
+            .then(data => {
+                if (data === "SUCCESS") {
+                    var mesaj = document.getElementById("kaydetMesaj_" + roleName);
+                    mesaj.style.display = "inline";
+                    setTimeout(function () { mesaj.style.display = "none"; }, 2000);
+                }
+            });
+    }
+
+    function rolSil(roleName) {
+        if (!confirm(roleName + " rolünü silmek istediğinize emin misiniz?"))
+            return;
+
+        var formData = new FormData();
+        formData.append("name", roleName);
+
+        fetch('/Role/DeleteRole', { method: 'POST', body: formData })
+            .then(res => res.text())
+            .then(data => {
+                if (data === "SUCCESS") {
+                    document.getElementById("rol_" + roleName).remove();
+                }
+            });
+    }
+</script>

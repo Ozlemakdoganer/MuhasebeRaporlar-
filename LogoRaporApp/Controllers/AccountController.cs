@@ -1,10 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
+using Microsoft.Extensions.Configuration;
+using LogoRaporApp.Services;
 
 namespace LogoRaporApp.Controllers
 {
     public class AccountController : Controller
     {
+        private readonly IConfiguration _configuration;
+        private readonly UserService _userService;
+
+        public AccountController(IConfiguration configuration, UserService userService)
+        {
+            _configuration = configuration;
+            _userService = userService;
+        }
+
         [HttpGet]
         public IActionResult Login()
         {
@@ -14,9 +25,23 @@ namespace LogoRaporApp.Controllers
         [HttpPost]
         public IActionResult Login(string username, string password)
         {
-            if (username == "admin" && password == "123")
+            var connStr = _configuration.GetConnectionString("DefaultConnection");
+
+            if (string.IsNullOrEmpty(connStr))
             {
-                HttpContext.Session.SetString("user", username);
+                ViewBag.Hata = "Veritabanı bağlantısı yapılandırılmamış. Lütfen sistem yöneticisiyle iletişime geçin.";
+                return View();
+            }
+
+            // Kullanıcıyı users.json'dan doğrula
+            var user = _userService.ValidateUser(username, password);
+
+            if (user != null)
+            {
+                HttpContext.Session.SetString("user", user.Username);
+                HttpContext.Session.SetString("role", user.Role);
+                HttpContext.Session.SetString("db", connStr);
+
                 return RedirectToAction("Dashboard", "Home");
             }
 
@@ -27,9 +52,11 @@ namespace LogoRaporApp.Controllers
         [HttpGet]
         public IActionResult Logout()
         {
-            HttpContext.Session.Remove("user");
-            HttpContext.Session.Remove("firm");
-            HttpContext.Session.Remove("period");
+            HttpContext.Session.Clear();
+
+            Response.Headers["Cache-Control"] = "no-cache, no-store, must-revalidate";
+            Response.Headers["Pragma"] = "no-cache";
+            Response.Headers["Expires"] = "0";
 
             return RedirectToAction("Login", "Account");
         }

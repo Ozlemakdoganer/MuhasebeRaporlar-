@@ -1,0 +1,199 @@
+﻿@model List<LogoRaporApp.Models.User>
+@{
+    Layout = null;
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h4 class="mb-0">Kullanıcı Yönetimi</h4>
+    <button type="button" class="btn btn-primary" onclick="yeniKullaniciFormAc()">+ Yeni Kullanıcı</button>
+</div>
+
+@* Yeni kullanıcı formu *@
+<div id="yeniKullaniciForm" class="card mb-4" style="display:none;">
+    <div class="card-body">
+        <h5 class="mb-3">Yeni Kullanıcı Ekle</h5>
+        <div class="row">
+            <div class="col-md-3 mb-2">
+                <label class="form-label">Kullanıcı Adı</label>
+                <input type="text" id="yeniUsername" class="form-control" placeholder="kullanici_adi" />
+            </div>
+            <div class="col-md-3 mb-2">
+                <label class="form-label">Ad Soyad</label>
+                <input type="text" id="yeniFullName" class="form-control" placeholder="Ad Soyad" />
+            </div>
+            <div class="col-md-2 mb-2">
+                <label class="form-label">Rol</label>
+                <select id="yeniRole" class="form-select">
+                    <option value="Admin">Admin</option>
+                    <option value="User" selected>User</option>
+                </select>
+            </div>
+            <div class="col-md-3 mb-2">
+                <label class="form-label">Şifre</label>
+                <input type="password" id="yeniPassword" class="form-control" placeholder="Şifre" />
+            </div>
+            <div class="col-md-1 mb-2 d-flex align-items-end">
+                <button type="button" class="btn btn-primary w-100" onclick="kullaniciEkle()">Ekle</button>
+            </div>
+        </div>
+        <div id="ekleHata" class="text-danger mt-2" style="display:none;"></div>
+    </div>
+</div>
+
+@* Kullanıcı listesi *@
+<div class="card">
+    <div class="card-body">
+        <table class="table table-bordered" id="kullaniciTablosu">
+            <thead>
+                <tr>
+                    <th>Kullanıcı Adı</th>
+                    <th>Ad Soyad</th>
+                    <th>Rol</th>
+                    <th style="width:200px;">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var user in Model)
+                {
+                    <tr id="satir_@user.Username">
+                        <td>@user.Username</td>
+                        <td>@user.FullName</td>
+                        <td>@user.Role</td>
+                        <td>
+                            <button type="button" class="btn btn-outline-primary btn-sm"
+                                    onclick="sifreDegistirFormAc('@user.Username')">
+                                Şifre Değiştir
+                            </button>
+                            <button type="button" class="btn btn-outline-danger btn-sm"
+                                    onclick="kullaniciSil('@user.Username')">
+                                Sil
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+@* Şifre değiştir modal *@
+<div id="sifreModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%;
+    background:rgba(0,0,0,0.5); z-index:9999; justify-content:center; align-items:center;">
+    <div style="background:white; border-radius:16px; padding:32px; max-width:400px; width:90%;">
+        <h5 class="mb-3">Şifre Değiştir</h5>
+        <input type="hidden" id="sifreUsername" />
+        <div class="mb-3">
+            <label class="form-label">Yeni Şifre</label>
+            <input type="password" id="yeniSifre" class="form-control" placeholder="Yeni şifre" />
+        </div>
+        <div id="sifreHata" class="text-danger mb-2" style="display:none;"></div>
+        <div class="d-flex gap-2 justify-content-end">
+            <button type="button" class="btn btn-outline-secondary" onclick="sifreModalKapat()">İptal</button>
+            <button type="button" class="btn btn-primary" onclick="sifreDegistir()">Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<script>
+        function yeniKullaniciFormAc() {
+        var form = document.getElementById("yeniKullaniciForm");
+        form.style.display = form.style.display === "none" ? "block" : "none";
+
+        // Rolleri dinamik yükle
+        fetch('/Role/GetRoles')
+            .then(res => res.json())
+            .then(data => {
+                var select = document.getElementById("yeniRole");
+                select.innerHTML = '<option value="Admin">Admin</option>';
+                data.forEach(function (roleName) {
+                    var option = document.createElement("option");
+                    option.value = roleName;
+                    option.innerText = roleName;
+                    select.appendChild(option);
+                });
+            });
+    }
+
+    function kullaniciEkle() {
+        var username = document.getElementById("yeniUsername").value.trim();
+        var fullName = document.getElementById("yeniFullName").value.trim();
+        var role = document.getElementById("yeniRole").value;
+        var password = document.getElementById("yeniPassword").value;
+
+        if (!username || !password || !fullName) {
+            document.getElementById("ekleHata").style.display = "block";
+            document.getElementById("ekleHata").innerText = "Tüm alanları doldurun.";
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append("username", username);
+        formData.append("fullName", fullName);
+        formData.append("role", role);
+        formData.append("password", password);
+
+        fetch('/User/AddUser', { method: 'POST', body: formData })
+            .then(res => res.text())
+            .then(data => {
+                if (data === "SUCCESS") {
+                    location.reload();
+                } else if (data === "DUPLICATE") {
+                    document.getElementById("ekleHata").style.display = "block";
+                    document.getElementById("ekleHata").innerText = "Bu kullanıcı adı zaten mevcut.";
+                }
+            });
+    }
+
+    function kullaniciSil(username) {
+        if (!confirm(username + " kullanıcısını silmek istediğinize emin misiniz?"))
+            return;
+
+        var formData = new FormData();
+        formData.append("username", username);
+
+        fetch('/User/DeleteUser', { method: 'POST', body: formData })
+            .then(res => res.text())
+            .then(data => {
+                if (data === "SUCCESS") {
+                    document.getElementById("satir_" + username).remove();
+                } else if (data === "SELF_DELETE") {
+                    alert("Kendinizi silemezsiniz!");
+                }
+            });
+    }
+
+    function sifreDegistirFormAc(username) {
+        document.getElementById("sifreUsername").value = username;
+        document.getElementById("yeniSifre").value = "";
+        document.getElementById("sifreHata").style.display = "none";
+        document.getElementById("sifreModal").style.display = "flex";
+    }
+
+    function sifreModalKapat() {
+        document.getElementById("sifreModal").style.display = "none";
+    }
+
+    function sifreDegistir() {
+        var username = document.getElementById("sifreUsername").value;
+        var newPassword = document.getElementById("yeniSifre").value;
+
+        if (!newPassword) {
+            document.getElementById("sifreHata").style.display = "block";
+            document.getElementById("sifreHata").innerText = "Şifre boş olamaz.";
+            return;
+        }
+
+        var formData = new FormData();
+        formData.append("username", username);
+        formData.append("newPassword", newPassword);
+
+        fetch('/User/ChangePassword', { method: 'POST', body: formData })
+            .then(res => res.text())
+            .then(data => {
+                if (data === "SUCCESS") {
+                    sifreModalKapat();
+                    alert("Şifre başarıyla değiştirildi.");
+                }
+            });
+    }
+</script>

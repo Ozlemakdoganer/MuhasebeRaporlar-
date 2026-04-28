@@ -1,5 +1,6 @@
 ﻿using ClosedXML.Excel;
 using LogoRaporApp.Models;
+using LogoRaporApp.Services;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
@@ -68,6 +69,7 @@ namespace LogoRaporApp.Controllers
                  return View("DbSettings");
              }
          }*/
+
         [HttpPost]
         public IActionResult SaveDbSettings(DbSetting model)
         {
@@ -85,38 +87,52 @@ namespace LogoRaporApp.Controllers
                 }
 
                 bool hasExistingSelection =
-    HttpContext.Session.GetInt32("firm") != null &&
-    HttpContext.Session.GetInt32("period") != null;
+                    HttpContext.Session.GetInt32("firm") != null &&
+                    HttpContext.Session.GetInt32("period") != null;
 
+                // Session'ı güncelle
                 HttpContext.Session.SetString("db", connStr);
-                SaveDbSettingsToFile(new SavedDbSetting
-                {
-                    Server = model.Server,
-                    Database = model.Database,
-                    Username = model.Username
-                });
-
                 HttpContext.Session.Remove("firm");
                 HttpContext.Session.Remove("period");
 
+                // appsettings.json'ı güncelle
+                UpdateConnectionString(connStr);
+
                 if (hasExistingSelection)
-                {
                     return Content("SUCCESS_UPDATE");
-                }
 
                 return Content("SUCCESS_FIRST");
-
-
-
             }
             catch (Exception)
             {
                 ViewBag.Error = "Bağlantı başarısız. Girdiğiniz veritabanı bilgilerini kontrol edip tekrar deneyin.";
-                return View("DbSettings");
+                return View("DbSettings", model);
             }
         }
+        /*----------------- Update Connection String in appsettings.json -----------------*/
 
+        private void UpdateConnectionString(string newConnStr)
+        {
+            var appSettingsPath = Path.Combine(Directory.GetCurrentDirectory(), "appsettings.json");
+            var json = System.IO.File.ReadAllText(appSettingsPath);
 
+            var jsonObj = System.Text.Json.JsonSerializer.Deserialize<Dictionary<string, object>>(json)
+                          ?? new Dictionary<string, object>();
+
+            var connStrings = new Dictionary<string, string>
+    {
+        { "DefaultConnection", newConnStr }
+    };
+
+            jsonObj["ConnectionStrings"] = connStrings;
+
+            var updatedJson = System.Text.Json.JsonSerializer.Serialize(jsonObj, new System.Text.Json.JsonSerializerOptions
+            {
+                WriteIndented = true
+            });
+
+            System.IO.File.WriteAllText(appSettingsPath, updatedJson);
+        }
 
         // ---------------- SELECT COMPANY ----------------
 
@@ -731,44 +747,69 @@ namespace LogoRaporApp.Controllers
 
 
         // ---------------- DASHBOARD ----------------
-
         public IActionResult Dashboard()
         {
-            if (HttpContext.Session.GetString("user") == null)
+            var user = HttpContext.Session.GetString("user");
+
+            if (string.IsNullOrEmpty(user))
                 return RedirectToAction("Login", "Account");
 
-            ViewBag.DbConnected = !string.IsNullOrEmpty(HttpContext.Session.GetString("db"));
-            ViewBag.CanUseReports =
-                !string.IsNullOrEmpty(HttpContext.Session.GetString("db")) &&
-                HttpContext.Session.GetInt32("firm") != null &&
-                HttpContext.Session.GetInt32("period") != null;
+            var db = HttpContext.Session.GetString("db");
+            var firm = HttpContext.Session.GetInt32("firm");
+            var period = HttpContext.Session.GetInt32("period");
+            var role = HttpContext.Session.GetString("role");
+
+            ViewBag.DbConnected = !string.IsNullOrEmpty(db);
+            ViewBag.CanUseReports = !string.IsNullOrEmpty(db) && firm.HasValue && period.HasValue;
+            ViewBag.Role = role;
+
+            // Rol izinlerini ViewBag'e ekle
+            if (role != "Admin")
+            {
+                var roleService = HttpContext.RequestServices.GetService<RoleService>();
+                var roleObj = roleService?.GetRole(role ?? "");
+                ViewBag.Permissions = roleObj?.Permissions ?? new List<string>();
+            }
+            else
+            {
+                ViewBag.Permissions = null; // Admin her şeyi görebilir
+            }
 
             return View();
+        }
+        /*-------IConfiguration------*/
+        private readonly IConfiguration _configuration;
+
+        public HomeController(IConfiguration configuration)
+        {
+            _configuration = configuration;
         }
 
 
         //---------DATABASE SETTINGS------------
 
-        
-        [HttpGet]        
+        [HttpGet]
         public IActionResult DbSettings()
         {
             if (HttpContext.Session.GetString("user") == null)
                 return RedirectToAction("Login", "Account");
 
-            var saved = LoadDbSettingsFromFile();
+            // appsettings.json'daki connection string'i parse edip forma doldur
+            var connStr = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
-            var model = new DbSetting
+            var model = new DbSetting();
+
+            if (!string.IsNullOrEmpty(connStr))
             {
-                Server = saved.Server,
-                Database = saved.Database,
-                Username = saved.Username,
-                Password = ""
-            };
+                var builder = new SqlConnectionStringBuilder(connStr);
+                model.Server = builder.DataSource;
+                model.Database = builder.InitialCatalog;
+                model.Username = builder.UserID;
+                model.Password = ""; // güvenlik için şifreyi forma doldurmuyoruz
+            }
 
             return View(model);
         }
-
 
         [HttpGet]
         //---------SATIS FATURALARI ACTION---------
@@ -1456,34 +1497,6 @@ namespace LogoRaporApp.Controllers
             return View(gelirler);
         }
 
-        /*-----------------Yardımcı Metodlar-----------------*/
-        private string GetDbSettingsFilePath()
-        {
-            return Path.Combine(Directory.GetCurrentDirectory(), "dbsettings.json");
-        }
-
-        private void SaveDbSettingsToFile(SavedDbSetting model)
-        {
-            var json = JsonSerializer.Serialize(model);
-            System.IO.File.WriteAllText(GetDbSettingsFilePath(), json);
-        }
-
-        private SavedDbSetting LoadDbSettingsFromFile()
-        {
-            var path = GetDbSettingsFilePath();
-
-            if (!System.IO.File.Exists(path))
-                return new SavedDbSetting();
-
-            var json = System.IO.File.ReadAllText(path);
-
-            if (string.IsNullOrWhiteSpace(json))
-                return new SavedDbSetting();
-
-            return JsonSerializer.Deserialize<SavedDbSetting>(json) ?? new SavedDbSetting();
-        }
-
-
-
+            
     }
 }

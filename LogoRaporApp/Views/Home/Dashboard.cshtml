@@ -1053,6 +1053,43 @@ function tersBakiyeUyarilariKopyala() {
         }, 2000);
     });
 }
+            /*----------------- Kullanıcı Yönetimi -------*/
+                        function kullaniciYonetimiGetir() {
+                fetch('/User/Index')
+                    .then(res => res.text())
+                    .then(data => {
+                        document.getElementById("welcomeArea").style.display = "none";
+                        document.getElementById("reportArea").style.display = "block";
+                        document.getElementById("reportArea").innerHTML = data;
+                        document.getElementById("pageTitle").innerText = "Kullanıcı Yönetimi";
+
+                        // Sayfadaki script'leri çalıştır
+                        var scripts = document.getElementById("reportArea").querySelectorAll("script");
+                        scripts.forEach(function (script) {
+                            var newScript = document.createElement("script");
+                            newScript.textContent = script.textContent;
+                            document.body.appendChild(newScript);
+                        });
+                    });
+            }
+                        /*----------------- Rol Yönetimi -------*/
+                        function rolYonetimiGetir() {
+                fetch('/Role/Index')
+                    .then(res => res.text())
+                    .then(data => {
+                        document.getElementById("welcomeArea").style.display = "none";
+                        document.getElementById("reportArea").style.display = "block";
+                        document.getElementById("reportArea").innerHTML = data;
+                        document.getElementById("pageTitle").innerText = "Rol Yönetimi";
+
+                        var scripts = document.getElementById("reportArea").querySelectorAll("script");
+                        scripts.forEach(function (script) {
+                            var newScript = document.createElement("script");
+                            newScript.textContent = script.textContent;
+                            document.body.appendChild(newScript);
+                        });
+                    });
+            }
 /*----------------- Ters Bakiye Olan Satırları Vurgula -------*/
 
 function tersBakiyeTabloVurgula(uyarilar) {

@@ -1,0 +1,40 @@
+{
+  "Users": [
+    {
+      "Username": "admin",
+      "PasswordHash": "$2a$11$sjGf0UhhDq0CRDfckGmJJedkl.U4al8LIQZLwc0chbld2Fn7rUUr.",
+      "FullName": "Admin Kullan\u0131c\u0131",
+      "Role": "Admin"
+    },
+    {
+      "Username": "ahmet",
+      "PasswordHash": "$2a$11$Iw43au0ZWr1k4ZZRHbZPXuA8heLj/SIoQYWCKno1U9wjFMDqo./9K",
+      "FullName": "Ahmet emen",
+      "Role": "User"
+    },
+    {
+      "Username": "Habibe",
+      "PasswordHash": "$2a$11$x9bUNkWnqoRTpV9lYIaIeebTG.6FI0I31ZNAWQpuCRQpau9ZbIZv.",
+      "FullName": "Habibe Macit",
+      "Role": "User"
+    },
+    {
+      "Username": "logo",
+      "PasswordHash": "$2a$11$D1lp.nSzDpybZm7383Ot1uYUhcVbHNzHZrqjArPASoSIpBMpBRLDm",
+      "FullName": "\u00D6zlem Er",
+      "Role": "Admin"
+    },
+    {
+      "Username": "melike",
+      "PasswordHash": "$2a$11$gNfX97OGs/3KakY.wi.lbO4j5CALYSKHlNUhl8bvKGKDDhaXiCjKK",
+      "FullName": "melike erdem",
+      "Role": "Sat\u0131\u015F"
+    },
+    {
+      "Username": "rukiye",
+      "PasswordHash": "$2a$11$1XH8fMgGA2eTLNcKzuw8r.XziDGE7Vg5YZIzQ4nHMkdoFQnPiAxMS",
+      "FullName": "rukiye \u015Fara",
+      "Role": "Sat\u0131nalma"
+    }
+  ]
+}

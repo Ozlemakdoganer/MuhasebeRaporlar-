@@ -130,18 +130,29 @@
             </div>
         }
 
-        <form asp-controller="Account" asp-action="Login" method="post">
+        <form asp-controller="Account" asp-action="Login" method="post" autocomplete="on">
 
 
             <div class="mb-3">
-                <label>Kullanıcı Adı</label>
-                <input type="text" name="username" class="form-control" placeholder="Kullanıcı adı" />
+                <label class="form-label">Kullanıcı Adı</label>
+                <input type="text"
+                       name="username"
+                       class="form-control"
+                       placeholder="Kullanıcı adı"
+                       required
+                       autocomplete="username" />
             </div>
 
             <div class="mb-3">
-                <label>Şifre</label>
+                <label class="form-label">Şifre</label>
                 <div class="password-wrapper">
-                    <input type="password" id="passwordInput" name="password" class="form-control" placeholder="Şifre" />
+                    <input type="password"
+                           id="passwordInput"
+                           name="password"
+                           class="form-control"
+                           placeholder="Şifre"
+                           required
+                           autocomplete="current-password" />
                     <button type="button" class="toggle-password" onclick="togglePassword()" id="togglePasswordBtn">👁</button>
                 </div>
             </div>

@@ -71,5 +71,35 @@
                 </div>
             </div>
         </div>
+
+        @if (Context.Session.GetString("role") == "Admin")
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm h-100" style="cursor:pointer;" onclick="kullaniciYonetimiGetir()">
+                    <div class="card-body">
+                        <h5 class="card-title">Kullanıcı Yönetimi</h5>
+                        <p class="card-text text-muted">
+                            Kullanıcı ekle, sil veya şifre değiştir.
+                        </p>
+                        <div class="text-success small fw-semibold">Sadece Admin</div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (Context.Session.GetString("role") == "Admin")
+        {
+            <div class="col-md-4 mb-3">
+                <div class="card shadow-sm h-100" style="cursor:pointer;" onclick="rolYonetimiGetir()">
+                    <div class="card-body">
+                        <h5 class="card-title">Rol Yönetimi</h5>
+                        <p class="card-text text-muted">
+                            Rol ekle, sil ve rapor izinlerini yönet.
+                        </p>
+                        <div class="text-success small fw-semibold">Sadece Admin</div>
+                    </div>
+                </div>
+            </div>
+        }
     </div>
 </div>
