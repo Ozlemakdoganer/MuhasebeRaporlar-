@@ -539,6 +539,11 @@
             <span class="menu-text">Ayarlar</span>
         </a>
 
+            <a class="menu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); sifreDegistirGetir()">
+                <span>🔑</span>
+                <span class="menu-text">Şifremi Değiştir</span>
+            </a>
+
         <a class="menu-item" href="/Account/Logout">
             <span>🚪</span>
             <span class="menu-text">Çıkış</span>
@@ -568,7 +573,7 @@
 
         <div class="right">
     <button type="button" class="btn btn-warning btn-sm" onclick="firmaSecimGetir()">Firma / Dönem Seç</button>
-    <span class="user">👤 Admin</span>
+            <span class="user">👤 @Context.Session.GetString("fullName")</span>
     <a class="logout" href="/Account/Logout">Çıkış</a>
 </div>
 
@@ -585,26 +590,31 @@
 
 
             <div class="row mt-4">
-<div class="col-md-4 mb-3">
-    <div class="card-box">
-        <div style="font-size:28px;">📊</div>
-        <div class="mt-2">NET SATIŞLAR</div>
-    </div>
-</div>
+                <div class="col-md-4 mb-3">
+                    <div class="card-box">
+                        <div style="font-size:28px;">📊</div>
+                        <div class="mt-2 text-muted small">NET SATIŞLAR</div>
+                        <div class="fw-bold fs-5 mt-1">@ViewBag.NetSatislar</div>
+                    </div>
+                </div>
 
-<div class="col-md-4 mb-3">
-    <div class="card-box">
-        <div style="font-size:28px;">🧾</div>
-        <div class="mt-2">TOPLAM MALİYETLER</div>
+ <div class="col-md-4 mb-3">
+        <div class="card-box">
+            <div style="font-size:28px;">🧾</div>
+            <div class="mt-2 text-muted small">TOPLAM MALİYETLER</div>
+            <div class="fw-bold fs-5 mt-1">@ViewBag.ToplamMaliyet</div>
+        </div>
     </div>
-</div>
 
-<div class="col-md-4 mb-3">
-    <div class="card-box">
-        <div style="font-size:28px;">📦</div>
-        <div class="mt-2">DÖNEM NET KARI</div>
-    </div>
-</div>
+                <div class="col-md-4 mb-3">
+                    <div class="card-box">
+                        <div style="font-size:28px;">📦</div>
+                        <div class="mt-2 text-muted small">DÖNEM NET KARI</div>
+                        <div class="fw-bold fs-5 mt-1">
+                            @ViewBag.DonemKar
+                        </div>
+                    </div>
+                </div>
 
 <div class="col-md-4 mb-3">
     <div class="card-box">
@@ -827,26 +837,34 @@
             location.reload();
         });
     }
-    if (e.target && e.target.id === "mizanForm") {
-    e.preventDefault();
+                if (e.target && e.target.id === "mizanForm") {
+                e.preventDefault();
 
-    const form = e.target;
-    const formData = new FormData(form);
-    const queryString = new URLSearchParams(formData).toString();
+                const form = e.target;
+                const formData = new FormData(form);
+                const queryString = new URLSearchParams(formData).toString();
 
-    fetch('/Home/Mizan?' + queryString)
-        .then(res => res.text())
-        .then(data => {
-            document.getElementById("welcomeArea").style.display = "none";
-            document.getElementById("reportArea").style.display = "block";
-            document.getElementById("reportArea").innerHTML = data;
-            document.getElementById("pageTitle").innerText = "İki Tarih Arası Mizan";
-            setTimeout(function () {
-    mizanKolonResizeAktifEt();
-}, 100);
+                fetch('/Home/Mizan?' + queryString)
+                    .then(res => res.text())
+                    .then(data => {
+                        document.getElementById("welcomeArea").style.display = "none";
+                        document.getElementById("reportArea").style.display = "block";
+                        document.getElementById("reportArea").innerHTML = data;
+                        document.getElementById("pageTitle").innerText = "İki Tarih Arası Mizan";
 
-        });
-}
+                        setTimeout(function () {
+                            mizanKolonResizeAktifEt();
+                        }, 100);
+
+                        // Script'leri çalıştır
+                        var scripts = document.getElementById("reportArea").querySelectorAll("script");
+                        scripts.forEach(function (script) {
+                            var newScript = document.createElement("script");
+                            newScript.textContent = script.textContent;
+                            document.body.appendChild(newScript);
+                        });
+                    });
+            }
 
 
 });
@@ -882,22 +900,47 @@ function toggleDetay() {
     }
 }
 
-//---Mizan getir
-function mizanGetir() {
-    fetch('/Home/Mizan')
-        .then(res => res.text())
-        .then(data => {
-            document.getElementById("welcomeArea").style.display = "none";
-            document.getElementById("reportArea").style.display = "block";
-            document.getElementById("reportArea").innerHTML = data;
-            document.getElementById("pageTitle").innerText = "İki Tarih Arası Mizan";
+            function sifreDegistirGetir() {
+                fetch('/Account/ChangeMyPassword')
+                    .then(res => res.text())
+                    .then(data => {
+                        document.getElementById("welcomeArea").style.display = "none";
+                        document.getElementById("reportArea").style.display = "block";
+                        document.getElementById("reportArea").innerHTML = data;
+                        document.getElementById("pageTitle").innerText = "Şifremi Değiştir";
 
-            setTimeout(function () {
-                mizanKolonResizeAktifEt();
-            }, 100);
-        });
-}
-   
+                        var scripts = document.getElementById("reportArea").querySelectorAll("script");
+                        scripts.forEach(function (script) {
+                            var newScript = document.createElement("script");
+                            newScript.textContent = script.textContent;
+                            document.body.appendChild(newScript);
+                        });
+                    });
+            }
+
+//---Mizan getir
+            function mizanGetir() {
+                fetch('/Home/Mizan')
+                    .then(res => res.text())
+                    .then(data => {
+                        document.getElementById("welcomeArea").style.display = "none";
+                        document.getElementById("reportArea").style.display = "block";
+                        document.getElementById("reportArea").innerHTML = data;
+                        document.getElementById("pageTitle").innerText = "İki Tarih Arası Mizan";
+
+                        setTimeout(function () {
+                            mizanKolonResizeAktifEt();
+                        }, 100);
+
+                        // Script'leri çalıştır
+                        var scripts = document.getElementById("reportArea").querySelectorAll("script");
+                        scripts.forEach(function (script) {
+                            var newScript = document.createElement("script");
+                            newScript.textContent = script.textContent;
+                            document.body.appendChild(newScript);
+                        });
+                    });
+            }
 
 function mizanDetayToggle() {
     var alan = document.getElementById("mizanDetayAlan");
@@ -1134,6 +1177,83 @@ function tersBakiyeTabloVurgula(uyarilar) {
     });
 }
 
+            // Dashboard.cshtml içindeki script bloğuna ekle
+                        function tarihKontrol() {
+                var baslangicInput = document.getElementById("baslangicTarihiInput");
+                var bitisInput = document.getElementById("bitisTarihiInput");
+                var donemBaslangic = document.getElementById("donemBaslangic")?.value;
+                var donemBitis = document.getElementById("donemBitis")?.value;
+
+                if (!baslangicInput || !bitisInput) return true;
+
+                var baslangic = baslangicInput.value;
+                var bitis = bitisInput.value;
+
+                var gecersiz = false;
+
+                if (baslangic && donemBaslangic && donemBitis &&
+                    (baslangic < donemBaslangic || baslangic > donemBitis)) {
+                    baslangicInput.classList.add("is-invalid");
+                    gecersiz = true;
+                } else {
+                    baslangicInput.classList.remove("is-invalid");
+                }
+
+                if (bitis && donemBitis && bitis > donemBitis) {
+                    bitisInput.classList.add("is-invalid");
+                    gecersiz = true;
+                } else {
+                    bitisInput.classList.remove("is-invalid");
+                }
+
+                return !gecersiz;
+            }
+
+                       function mizanGetirValidasyon() {
+                if (!tarihKontrol()) return;
+    
+                const form = document.getElementById("mizanForm");
+                const formData = new FormData(form);
+                const queryString = new URLSearchParams(formData).toString();
+
+                fetch('/Home/Mizan?' + queryString)
+                    .then(res => res.text())
+                    .then(data => {
+                        document.getElementById("welcomeArea").style.display = "none";
+                        document.getElementById("reportArea").style.display = "block";
+                        document.getElementById("reportArea").innerHTML = data;
+                        document.getElementById("pageTitle").innerText = "İki Tarih Arası Mizan";
+
+                        setTimeout(function () {
+                            mizanKolonResizeAktifEt();
+                        }, 100);
+
+                        var scripts = document.getElementById("reportArea").querySelectorAll("script");
+                        scripts.forEach(function (script) {
+                            var newScript = document.createElement("script");
+                            newScript.textContent = script.textContent;
+                            document.body.appendChild(newScript);
+                        });
+                    });
+            }
+
+                        function karZararGetir() {
+                fetch('/Home/KarZarar')
+                    .then(res => res.text())
+                    .then(data => {
+                        document.getElementById("welcomeArea").style.display = "none";
+                        document.getElementById("reportArea").style.display = "block";
+                        document.getElementById("reportArea").innerHTML = data;
+                        document.getElementById("pageTitle").innerText = "Gelir Tablosu";
+
+                        var scripts = document.getElementById("reportArea").querySelectorAll("script");
+                        scripts.forEach(function (script) {
+                            var newScript = document.createElement("script");
+                            newScript.textContent = script.textContent;
+                            document.body.appendChild(newScript);
+                        });
+                    });
+            }
 
 </script>
 <div id="footerInfo">

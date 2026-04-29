@@ -24,17 +24,27 @@
 
         <form id="mizanForm" method="get" action="/Home/Mizan">
 
+            <input type="hidden" id="donemBaslangic" value="@ViewBag.DonemBaslangic" />
+            <input type="hidden" id="donemBitis" value="@ViewBag.DonemBitis" />
+
             <div class="row align-items-end">
                 <div class="col-md-2 mb-3">
                     <label class="form-label">Başlangıç Tarihi</label>
-                    <input type="date" name="baslangicTarihi" class="form-control" value="@ViewBag.BaslangicTarihi" />
+                    <input type="date" name="baslangicTarihi" class="form-control"
+                           id="baslangicTarihiInput"
+                           value="@ViewBag.BaslangicTarihi"
+                           onchange="tarihKontrol()" />                    
                 </div>
 
                 <div class="col-md-2 mb-3">
                     <label class="form-label">Bitiş Tarihi</label>
-                    <input type="date" name="bitisTarihi" class="form-control" value="@ViewBag.BitisTarihi" />
+                    <input type="date" name="bitisTarihi" class="form-control"
+                           id="bitisTarihiInput"
+                           value="@ViewBag.BitisTarihi"
+                           onchange="tarihKontrol()" />
                 </div>
-
+               
+              
                 <div class="col-md-2 mb-3">
                     <label class="form-label">Hesap Kodu Başlangıç</label>
                     <input type="text" name="hesapKoduBaslangic" class="form-control" placeholder="Örn: 100" value="@ViewBag.HesapKoduBaslangic" />
@@ -51,7 +61,7 @@
                 </div>
 
                 <div class="col-md-2 mb-3">
-                    <button type="submit" class="btn btn-primary w-100 mb-2">Getir</button>
+                    <button type="button" class="btn btn-primary w-100 mb-2" onclick="mizanGetirValidasyon()">Getir</button>
                     <button type="button"
                             class="btn btn-outline-primary w-100"
                             onclick="var alan = document.getElementById('detayliFiltreAlani'); alan.style.display = (alan.style.display === 'none' ? 'block' : 'none');">
@@ -105,6 +115,7 @@
 
                 </div>
             </div>
+            
 
         </form>
 

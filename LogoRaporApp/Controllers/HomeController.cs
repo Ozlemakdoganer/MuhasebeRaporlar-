@@ -1,4 +1,5 @@
 ﻿using ClosedXML.Excel;
+using DocumentFormat.OpenXml.Wordprocessing;
 using LogoRaporApp.Models;
 using LogoRaporApp.Services;
 using Microsoft.AspNetCore.Http;
@@ -318,15 +319,51 @@ namespace LogoRaporApp.Controllers
 
             var firm = HttpContext.Session.GetInt32("firm");
             var period = HttpContext.Session.GetInt32("period");
+            var connStr = HttpContext.Session.GetString("db");
 
             if (firm == null || period == null)
                 return Content("Firma / dönem seçimi yapılmamış.");
+            // Tarihler boşsa dönem tarihlerini otomatik getir
+            string donemBaslangic = "";
+            string donemBitis = "";
+
+            using (SqlConnection con = new SqlConnection(connStr))
+            {
+                con.Open();
+                SqlCommand cmd = new SqlCommand(
+                    "SELECT BEGDATE, ENDDATE FROM L_CAPIPERIOD WHERE FIRMNR=@f AND NR=@p", con);
+                cmd.Parameters.AddWithValue("@f", firm.Value);
+                cmd.Parameters.AddWithValue("@p", period.Value);
+
+                var dr = cmd.ExecuteReader();
+                if (dr.Read())
+                {
+                    var begDate = Convert.ToDateTime(dr["BEGDATE"]);
+                    var endDate = Convert.ToDateTime(dr["ENDDATE"]);
+
+                    donemBaslangic = begDate.ToString("yyyy-MM-dd");
+                    donemBitis = endDate.ToString("yyyy-MM-dd");
+
+                    if (string.IsNullOrEmpty(baslangicTarihi) || string.IsNullOrEmpty(bitisTarihi))
+                    {
+                        var bugun = DateTime.Today;
+                        if (endDate > bugun)
+                            endDate = bugun;
+
+                        baslangicTarihi = begDate.ToString("yyyy-MM-dd");
+                        bitisTarihi = endDate.ToString("yyyy-MM-dd");
+                    }
+                }
+            }
+
+            ViewBag.DonemBaslangic = donemBaslangic;
+            ViewBag.DonemBitis = donemBitis;
 
             string firmStr = firm.Value.ToString("D3");
             string periodStr = period.Value.ToString("D2");
             string firmaAdi = "";
 
-            var connStr = HttpContext.Session.GetString("db");
+            
             using (SqlConnection con = new SqlConnection(connStr))
             {
                 con.Open();
@@ -363,6 +400,11 @@ namespace LogoRaporApp.Controllers
                 KapanisFisi = kapanisFisi
             };
 
+            // Filtreleri session'a kaydet
+            HttpContext.Session.SetString("mizanFiltre_baslangic", baslangicTarihi ?? "");
+            HttpContext.Session.SetString("mizanFiltre_bitis", bitisTarihi ?? "");
+            HttpContext.Session.SetString("mizanFiltre_kapanisFisi", kapanisFisi ?? "Dahil");
+
             decimal toplamBorc, toplamAlacak, toplamBorcBakiye, toplamAlacakBakiye;
 
             var model = MizanVerisiGetir(
@@ -377,7 +419,11 @@ namespace LogoRaporApp.Controllers
             ViewBag.ToplamBorcBakiye = toplamBorcBakiye;
             ViewBag.ToplamAlacakBakiye = toplamAlacakBakiye;
 
+
+
             return View(model);
+
+
         }
 
 
@@ -763,7 +809,6 @@ namespace LogoRaporApp.Controllers
             ViewBag.CanUseReports = !string.IsNullOrEmpty(db) && firm.HasValue && period.HasValue;
             ViewBag.Role = role;
 
-            // Rol izinlerini ViewBag'e ekle
             if (role != "Admin")
             {
                 var roleService = HttpContext.RequestServices.GetService<RoleService>();
@@ -772,7 +817,56 @@ namespace LogoRaporApp.Controllers
             }
             else
             {
-                ViewBag.Permissions = null; // Admin her şeyi görebilir
+                ViewBag.Permissions = null;
+            }
+
+            // Dashboard kartları için veri
+            if (!string.IsNullOrEmpty(db) && firm.HasValue && period.HasValue)
+            {
+                try
+                {
+                    var filtre = new MizanFiltreModel
+                    {
+                        HesapSeviyesi = "9",
+                        KapanisFisi = "Dahil"
+                    };
+
+                    decimal toplamBorc, toplamAlacak, toplamBorcBakiye, toplamAlacakBakiye;
+                    var mizanVerisi = MizanVerisiGetir(filtre, out toplamBorc, out toplamAlacak, out toplamBorcBakiye, out toplamAlacakBakiye);
+
+                    // Net Satışlar
+                    var netSatislar = mizanVerisi
+                        .Where(x => !x.HesapKodu.Contains(".") &&
+                            (x.HesapKodu.StartsWith("600") || x.HesapKodu.StartsWith("601") || x.HesapKodu.StartsWith("602")))
+                        .Sum(x => x.Alacak);
+
+                    // Toplam Maliyetler
+                    var toplamMaliyet = mizanVerisi
+                        .Where(x => !x.HesapKodu.Contains(".") &&
+                            (x.HesapKodu.StartsWith("620") || x.HesapKodu.StartsWith("621") || x.HesapKodu.StartsWith("622")))
+                        .Sum(x => x.Borc);
+
+                    // Dönem Net Karı
+                    var gelirler = netSatislar;
+                    var giderler = toplamMaliyet;
+                    var donemKar = gelirler - giderler;
+
+                    ViewBag.NetSatislar = netSatislar.ToString("N2");
+                    ViewBag.ToplamMaliyet = toplamMaliyet.ToString("N2");
+                    ViewBag.DonemKar = donemKar.ToString("N2");
+                }
+                catch
+                {
+                    ViewBag.NetSatislar = "-";
+                    ViewBag.ToplamMaliyet = "-";
+                    ViewBag.DonemKar = "-";
+                }
+            }
+            else
+            {
+                ViewBag.NetSatislar = "-";
+                ViewBag.ToplamMaliyet = "-";
+                ViewBag.DonemKar = "-";
             }
 
             return View();
@@ -791,9 +885,7 @@ namespace LogoRaporApp.Controllers
         [HttpGet]
         public IActionResult DbSettings()
         {
-            if (HttpContext.Session.GetString("user") == null)
-                return RedirectToAction("Login", "Account");
-
+           
             // appsettings.json'daki connection string'i parse edip forma doldur
             var connStr = _configuration.GetConnectionString("DefaultConnection") ?? "";
 
@@ -950,6 +1042,166 @@ namespace LogoRaporApp.Controllers
             });
         }
 
+        /*-----------------Kar/Zarar Tablosu-----------------*/
+
+        [HttpGet]
+public IActionResult KarZarar()
+{
+    if (HttpContext.Session.GetString("db") == null)
+        return Content("DB bağlantısı bulunamadı.");
+
+    var firm = HttpContext.Session.GetInt32("firm");
+    var period = HttpContext.Session.GetInt32("period");
+
+    if (firm == null || period == null)
+        return Content("Firma / dönem seçimi yapılmamış.");
+
+    var baslangic = HttpContext.Session.GetString("mizanFiltre_baslangic");
+    var bitis = HttpContext.Session.GetString("mizanFiltre_bitis");
+    var kapanisFisi = HttpContext.Session.GetString("mizanFiltre_kapanisFisi");
+
+    var filtre = new MizanFiltreModel
+    {
+        BaslangicTarihi = string.IsNullOrEmpty(baslangic) ? null : baslangic,
+        BitisTarihi = string.IsNullOrEmpty(bitis) ? null : bitis,
+        HesapSeviyesi = "9",
+        HareketGormeyenler = "Listelenmeyecek",
+        BakiyeVermeyenler = "Listelenmeyecek",
+        KapanisFisi = string.IsNullOrEmpty(kapanisFisi) ? "Dahil" : kapanisFisi
+    };
+
+    decimal toplamBorc, toplamAlacak, toplamBorcBakiye, toplamAlacakBakiye;
+    var mizan = MizanVerisiGetir(filtre, out toplamBorc, out toplamAlacak, out toplamBorcBakiye, out toplamAlacakBakiye);
+
+    var model = new List<GelirTablosuSonucItem>();
+
+    // Yardımcı metodlar
+    void SatirEkle(string aciklama, decimal tutar, bool kalin, bool gider = false)
+    {
+        model.Add(new GelirTablosuSonucItem
+        {
+            Aciklama = aciklama,
+            Tutar = gider ? -tutar : tutar,
+            KalinMi = kalin
+        });
+    }
+
+    void HesapGrubuEkle(string[] kodlar, bool gider = false)
+    {
+        var hesaplar = mizan.Where(x => !x.HesapKodu.Contains(".") &&
+            kodlar.Any(k => x.HesapKodu.StartsWith(k)))
+            .OrderBy(x => x.HesapKodu);
+
+        foreach (var h in hesaplar)
+        {
+            var tutar = gider ? h.Borc : h.Alacak;
+            if (tutar == 0) continue;
+            model.Add(new GelirTablosuSonucItem
+            {
+                Aciklama = $"  {h.HesapKodu} - {h.HesapAdi}",
+                Tutar = gider ? -tutar : tutar,
+                KalinMi = false
+            });
+        }
+    }
+
+    // 1. SATIŞLAR
+    SatirEkle("A - BRÜT SATIŞLAR", 0, true);
+    HesapGrubuEkle(new[] { "600", "601", "602" });
+    var satislar = mizan.Where(x => !x.HesapKodu.Contains(".") &&
+        (x.HesapKodu.StartsWith("600") || x.HesapKodu.StartsWith("601") || x.HesapKodu.StartsWith("602")))
+        .Sum(x => x.Alacak);
+    SatirEkle("Brüt Satışlar Toplamı", satislar, true);
+
+    // 2. SATIŞ İNDİRİMLERİ
+    SatirEkle("B - SATIŞ İNDİRİMLERİ (-)", 0, true);
+    HesapGrubuEkle(new[] { "610", "611", "612" }, true);
+    var indirimler = mizan.Where(x => !x.HesapKodu.Contains(".") &&
+        (x.HesapKodu.StartsWith("610") || x.HesapKodu.StartsWith("611") || x.HesapKodu.StartsWith("612")))
+        .Sum(x => x.Alacak);
+    SatirEkle("Satış İndirimleri Toplamı", -indirimler, true);
+
+    var netSatislar = satislar - indirimler;
+    SatirEkle("NET SATIŞLAR", netSatislar, true);
+
+    // 3. SATIŞ MALİYETİ
+    SatirEkle("C - SATIŞLARIN MALİYETİ (-)", 0, true);
+    HesapGrubuEkle(new[] { "620", "621", "622", "623" }, true);
+    var satisMaliyeti = mizan.Where(x => !x.HesapKodu.Contains(".") &&
+        (x.HesapKodu.StartsWith("620") || x.HesapKodu.StartsWith("621") ||
+         x.HesapKodu.StartsWith("622") || x.HesapKodu.StartsWith("623")))
+        .Sum(x => x.Borc);
+    SatirEkle("Satış Maliyeti Toplamı", -satisMaliyeti, true);
+
+    decimal brutKar = netSatislar - satisMaliyeti;
+    SatirEkle("BRÜT SATIŞ KARI / ZARARI", brutKar, true);
+
+    // 4. FAALİYET GİDERLERİ
+    SatirEkle("D - FAALİYET GİDERLERİ (-)", 0, true);
+    HesapGrubuEkle(new[] { "630", "631", "632", "653", "654", "655", "656", "657", "658", "659" }, true);
+    var faaliyetGiderleri = mizan.Where(x => !x.HesapKodu.Contains(".") &&
+        (x.HesapKodu.StartsWith("630") || x.HesapKodu.StartsWith("631") ||
+         x.HesapKodu.StartsWith("632") || x.HesapKodu.StartsWith("653") ||
+         x.HesapKodu.StartsWith("654") || x.HesapKodu.StartsWith("655") ||
+         x.HesapKodu.StartsWith("656") || x.HesapKodu.StartsWith("657") ||
+         x.HesapKodu.StartsWith("658") || x.HesapKodu.StartsWith("659")))
+        .Sum(x => x.Borc);
+    SatirEkle("Faaliyet Giderleri Toplamı", -faaliyetGiderleri, true);
+
+    decimal faaliyetKar = brutKar - faaliyetGiderleri;
+    SatirEkle("FAALİYET KARI / ZARARI", faaliyetKar, true);
+
+    // 5. DİĞER GELİRLER
+    SatirEkle("E - DİĞER OLAĞAN GELİR VE KARLAR (+)", 0, true);
+    HesapGrubuEkle(new[] { "641", "642", "643", "644", "645", "646", "647", "648", "649", "671", "679" });
+    var digerGelirler = mizan.Where(x => !x.HesapKodu.Contains(".") &&
+        (x.HesapKodu.StartsWith("64") || x.HesapKodu.StartsWith("671") || x.HesapKodu.StartsWith("679")))
+        .Sum(x => x.Alacak);
+    SatirEkle("Diğer Gelirler Toplamı", digerGelirler, true);
+
+    // 6. FİNANSMAN GİDERLERİ
+    SatirEkle("F - FİNANSMAN GİDERLERİ (-)", 0, true);
+    HesapGrubuEkle(new[] { "660", "661" }, true);
+    var finansmanGiderleri = mizan.Where(x => !x.HesapKodu.Contains(".") &&
+        (x.HesapKodu.StartsWith("660") || x.HesapKodu.StartsWith("661")))
+        .Sum(x => x.Borc);
+    SatirEkle("Finansman Giderleri Toplamı", -finansmanGiderleri, true);
+
+    decimal olaganKar = faaliyetKar + digerGelirler - finansmanGiderleri;
+    SatirEkle("OLAĞAN KARI / ZARARI", olaganKar, true);
+
+    // 7. DİĞER GİDERLER
+    SatirEkle("G - OLAĞANDIŞI GELİR VE KARLAR (+)", 0, true);
+    HesapGrubuEkle(new[] { "671", "679" });
+    SatirEkle("H - OLAĞANDIŞI GİDER VE ZARARLAR (-)", 0, true);
+    HesapGrubuEkle(new[] { "680", "681", "689" }, true);
+    var digerGiderler = mizan.Where(x => !x.HesapKodu.Contains(".") &&
+        (x.HesapKodu.StartsWith("680") || x.HesapKodu.StartsWith("681") ||
+         x.HesapKodu.StartsWith("689")))
+        .Sum(x => x.Borc);
+    SatirEkle("Olağandışı Giderler Toplamı", -digerGiderler, true);
+
+    decimal donemKar = olaganKar - digerGiderler;
+    SatirEkle("DÖNEM KARI / ZARARI", donemKar, true);
+
+    decimal vergiKarsiligi = donemKar > 0 ? donemKar * 0.25m : 0;
+    SatirEkle("Vergi Karşılığı (-)", -vergiKarsiligi, false);
+
+    decimal donemNetKar = donemKar - vergiKarsiligi;
+    SatirEkle("DÖNEM NET KARI / ZARARI", donemNetKar, true);
+
+    ViewBag.BaslangicTarihi = baslangic;
+    ViewBag.BitisTarihi = bitis;
+    ViewBag.Firma = firm.Value.ToString("D3");
+    ViewBag.NetSatislar = netSatislar;
+    ViewBag.BrutKar = brutKar;
+    ViewBag.FaaliyetKar = faaliyetKar;
+    ViewBag.OlaganKar = olaganKar;
+    ViewBag.DonemKar = donemKar;
+    ViewBag.DonemNetKar = donemNetKar;
+
+    return View(model);
+}
         /*-----------------Gelir Tablosu Analizi-----------------*/
 
         [HttpGet]
@@ -964,12 +1216,18 @@ namespace LogoRaporApp.Controllers
             if (firm == null || period == null)
                 return Content("Firma / dönem seçimi yapılmamış.");
 
+            var baslangic = HttpContext.Session.GetString("mizanFiltre_baslangic");
+            var bitis = HttpContext.Session.GetString("mizanFiltre_bitis");
+            var kapanisFisi = HttpContext.Session.GetString("mizanFiltre_kapanisFisi");
+
             var filtre = new MizanFiltreModel
             {
+                BaslangicTarihi = string.IsNullOrEmpty(baslangic) ? null : baslangic,
+                BitisTarihi = string.IsNullOrEmpty(bitis) ? null : bitis,
                 HesapSeviyesi = "9",
                 HareketGormeyenler = "Listelenecek",
                 BakiyeVermeyenler = "Listelenecek",
-                KapanisFisi = "Dahil"
+                KapanisFisi = string.IsNullOrEmpty(kapanisFisi) ? "Dahil" : kapanisFisi
             };
 
 
