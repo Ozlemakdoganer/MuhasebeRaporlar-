@@ -1045,163 +1045,223 @@ namespace LogoRaporApp.Controllers
         /*-----------------Kar/Zarar Tablosu-----------------*/
 
         [HttpGet]
-public IActionResult KarZarar()
-{
-    if (HttpContext.Session.GetString("db") == null)
-        return Content("DB bağlantısı bulunamadı.");
-
-    var firm = HttpContext.Session.GetInt32("firm");
-    var period = HttpContext.Session.GetInt32("period");
-
-    if (firm == null || period == null)
-        return Content("Firma / dönem seçimi yapılmamış.");
-
-    var baslangic = HttpContext.Session.GetString("mizanFiltre_baslangic");
-    var bitis = HttpContext.Session.GetString("mizanFiltre_bitis");
-    var kapanisFisi = HttpContext.Session.GetString("mizanFiltre_kapanisFisi");
-
-    var filtre = new MizanFiltreModel
-    {
-        BaslangicTarihi = string.IsNullOrEmpty(baslangic) ? null : baslangic,
-        BitisTarihi = string.IsNullOrEmpty(bitis) ? null : bitis,
-        HesapSeviyesi = "9",
-        HareketGormeyenler = "Listelenmeyecek",
-        BakiyeVermeyenler = "Listelenmeyecek",
-        KapanisFisi = string.IsNullOrEmpty(kapanisFisi) ? "Dahil" : kapanisFisi
-    };
-
-    decimal toplamBorc, toplamAlacak, toplamBorcBakiye, toplamAlacakBakiye;
-    var mizan = MizanVerisiGetir(filtre, out toplamBorc, out toplamAlacak, out toplamBorcBakiye, out toplamAlacakBakiye);
-
-    var model = new List<GelirTablosuSonucItem>();
-
-    // Yardımcı metodlar
-    void SatirEkle(string aciklama, decimal tutar, bool kalin, bool gider = false)
-    {
-        model.Add(new GelirTablosuSonucItem
+        public IActionResult KarZarar()
         {
-            Aciklama = aciklama,
-            Tutar = gider ? -tutar : tutar,
-            KalinMi = kalin
-        });
-    }
+            if (HttpContext.Session.GetString("db") == null)
+                return Content("DB bağlantısı bulunamadı.");
 
-    void HesapGrubuEkle(string[] kodlar, bool gider = false)
-    {
-        var hesaplar = mizan.Where(x => !x.HesapKodu.Contains(".") &&
-            kodlar.Any(k => x.HesapKodu.StartsWith(k)))
-            .OrderBy(x => x.HesapKodu);
+            var firm = HttpContext.Session.GetInt32("firm");
+            var period = HttpContext.Session.GetInt32("period");
+            var connStr = HttpContext.Session.GetString("db");
 
-        foreach (var h in hesaplar)
-        {
-            var tutar = gider ? h.Borc : h.Alacak;
-            if (tutar == 0) continue;
-            model.Add(new GelirTablosuSonucItem
+            if (firm == null || period == null)
+                return Content("Firma / dönem seçimi yapılmamış.");
+
+            var baslangic = HttpContext.Session.GetString("mizanFiltre_baslangic");
+            var bitis = HttpContext.Session.GetString("mizanFiltre_bitis");
+            var kapanisFisi = HttpContext.Session.GetString("mizanFiltre_kapanisFisi");
+
+            if (string.IsNullOrEmpty(baslangic) || string.IsNullOrEmpty(bitis))
             {
-                Aciklama = $"  {h.HesapKodu} - {h.HesapAdi}",
-                Tutar = gider ? -tutar : tutar,
-                KalinMi = false
-            });
+                using (SqlConnection con = new SqlConnection(connStr))
+                {
+                    con.Open();
+                    SqlCommand cmd = new SqlCommand(
+                        "SELECT BEGDATE, ENDDATE FROM L_CAPIPERIOD WHERE FIRMNR=@f AND NR=@p", con);
+                    cmd.Parameters.AddWithValue("@f", firm.Value);
+                    cmd.Parameters.AddWithValue("@p", period.Value);
+                    var dr = cmd.ExecuteReader();
+                    if (dr.Read())
+                    {
+                        var begDate = Convert.ToDateTime(dr["BEGDATE"]);
+                        var endDate = Convert.ToDateTime(dr["ENDDATE"]);
+                        var bugun = DateTime.Today;
+                        if (endDate > bugun) endDate = bugun;
+                        baslangic = begDate.ToString("yyyy-MM-dd");
+                        bitis = endDate.ToString("yyyy-MM-dd");
+                    }
+                }
+            }
+
+            var filtre = new MizanFiltreModel
+            {
+                BaslangicTarihi = baslangic,
+                BitisTarihi = bitis,
+                HesapSeviyesi = null,
+                HareketGormeyenler = "Listelenecek",
+                BakiyeVermeyenler = "Listelenecek",
+                KapanisFisi = string.IsNullOrEmpty(kapanisFisi) ? "Dahil" : kapanisFisi
+            };
+
+            decimal toplamBorc, toplamAlacak, toplamBorcBakiye, toplamAlacakBakiye;
+            var mizan = MizanVerisiGetir(filtre, out toplamBorc, out toplamAlacak, out toplamBorcBakiye, out toplamAlacakBakiye);
+
+            var model = new List<GelirTablosuSonucItem>();
+
+            void AnaBaslik(string aciklama) =>
+                model.Add(new GelirTablosuSonucItem { Aciklama = aciklama, Tutar = 0, KalinMi = true, KarlilikOrani = "anabaslik" });
+
+            void AltBaslik(string aciklama, decimal tutar) =>
+                model.Add(new GelirTablosuSonucItem { Aciklama = aciklama, Tutar = tutar, KalinMi = false, KarlilikOrani = "altbaslik" });
+
+            void GenelToplam(string aciklama, decimal tutar) =>
+                model.Add(new GelirTablosuSonucItem { Aciklama = aciklama, Tutar = tutar, KalinMi = true, KarlilikOrani = "toplam" });
+
+            decimal Gelir(string kod) => mizan
+                .Where(x => !x.HesapKodu.Contains(".") && x.HesapKodu.StartsWith(kod))
+                .Sum(x => x.Alacak);
+
+            decimal Gider(string kod) => mizan
+                .Where(x => !x.HesapKodu.Contains(".") && x.HesapKodu.StartsWith(kod))
+                .Sum(x => x.Borc);
+
+            // A - BRÜT SATIŞLAR
+            AnaBaslik("A - BRÜT SATIŞLAR");
+            var yurticiSatis = Gelir("600");
+            var yurtdisiSatis = Gelir("601");
+            var digerGelir = Gelir("602");
+            AltBaslik("  1 - Yurtiçi Satışlar", yurticiSatis);
+            AltBaslik("  2 - Yurtdışı Satışlar", yurtdisiSatis);
+            AltBaslik("  3 - Diğer Gelirler", digerGelir);
+            var brutSatislar = yurticiSatis + yurtdisiSatis + digerGelir;
+
+            // B - SATIŞ İNDİRİMLERİ
+            AnaBaslik("B - SATIŞ İNDİRİMLERİ (-)");
+            var satisIade = Gelir("610");
+            var satisIskonto = Gelir("611");
+            var digerIndirim = Gelir("612");
+            AltBaslik("  1 - Satıştan İadeler (-)", -satisIade);
+            AltBaslik("  2 - Satış İskontoları (-)", -satisIskonto);
+            AltBaslik("  3 - Diğer İndirimler (-)", -digerIndirim);
+            var satisIndirimleri = satisIade + satisIskonto + digerIndirim;
+
+            var netSatislar = brutSatislar - satisIndirimleri;
+            GenelToplam("NET SATIŞLAR", netSatislar);
+
+            // C - SATIŞLARIN MALİYETİ
+            AnaBaslik("C - SATIŞLARIN MALİYETİ (-)");
+            var mamulMaliyet = Gider("620");
+            var ticaretMaliyet = Gider("621");
+            var hizmetMaliyet = Gider("622");
+            var digerMaliyet = Gider("623");
+            AltBaslik("  1 - Satılan Mamüllerin Maliyeti (-)", -mamulMaliyet);
+            AltBaslik("  2 - Satılan Ticari Mallar Maliyeti (-)", -ticaretMaliyet);
+            AltBaslik("  3 - Satılan Hizmet Maliyeti (-)", -hizmetMaliyet);
+            AltBaslik("  4 - Diğer Satışların Maliyeti (-)", -digerMaliyet);
+            var satisMaliyeti = mamulMaliyet + ticaretMaliyet + hizmetMaliyet + digerMaliyet;
+
+            var brutKar = netSatislar - satisMaliyeti;
+            GenelToplam("BRÜT SATIŞ KARI VEYA ZARARI", brutKar);
+
+            // D - FAALİYET GİDERLERİ
+            AnaBaslik("D - FAALİYET GİDERLERİ (-)");
+            var arastirmaGider = Gider("630");
+            var pazarlamaGider = Gider("631");
+            var yonetimGider = Gider("632");
+            AltBaslik("  1 - Araştırma ve Geliştirme Giderleri (-)", -arastirmaGider);
+            AltBaslik("  2 - Pazarlama, Satış ve Dağıtım Giderleri (-)", -pazarlamaGider);
+            AltBaslik("  3 - Genel Yönetim Giderleri (-)", -yonetimGider);
+            var faaliyetGiderleri = arastirmaGider + pazarlamaGider + yonetimGider;
+
+            var faaliyetKar = brutKar - faaliyetGiderleri;
+            GenelToplam("FAALİYET KARI VEYA ZARARI", faaliyetKar);
+
+            // E - DİĞER FAALİYETLERDEN OLAĞAN GELİR VE KARLAR
+            AnaBaslik("E - DİĞER FAALİYETLERDEN OLAĞAN GELİR VE KARLAR");
+            var temttu = Gelir("641");
+            var faizGelir = Gelir("642");
+            var komisyonGelir = Gelir("643");
+            var konusuKalmayan = Gelir("644");
+            var menkKiymetKar = Gelir("645");
+            var kambiyoKar = Gelir("646");
+            var reeskontGelir = Gelir("647");
+            var enflasyonKar = Gelir("648");
+            var digerOlaganGelir = Gelir("649");
+            AltBaslik("  1 - Bağlı Ortaklıklardan Temettü Gelirleri", temttu);
+            AltBaslik("  2 - Faiz Gelirleri", faizGelir);
+            AltBaslik("  3 - Komisyon Gelirleri", komisyonGelir);
+            AltBaslik("  4 - Konusu Kalmayan Karşılıklar", konusuKalmayan);
+            AltBaslik("  5 - Menkul Kıymet Satış Karları", menkKiymetKar);
+            AltBaslik("  6 - Kambiyo Karları", kambiyoKar);
+            AltBaslik("  7 - Reeskont Faiz Gelirleri", reeskontGelir);
+            AltBaslik("  8 - Enflasyon Düzeltmesi Karları", enflasyonKar);
+            AltBaslik("  9 - Faaliyetle İlgili Diğer Gelir ve Karlar", digerOlaganGelir);
+            var eToplamGelir = temttu + faizGelir + komisyonGelir + konusuKalmayan +
+                               menkKiymetKar + kambiyoKar + reeskontGelir + enflasyonKar + digerOlaganGelir;
+
+            // F - DİĞER FAALİYETLERDEN OLAĞAN GİDER VE ZARARLAR
+            AnaBaslik("F - DİĞER FAALİYETLERDEN OLAĞAN GİDER VE ZARARLAR (-)");
+            var komisyonGider = Gider("653");
+            var karsilikGider = Gider("654");
+            var menkKiymetZarar = Gider("655");
+            var kambiyoZarar = Gider("656");
+            var reeskontGider = Gider("657");
+            var enflasyonZarar = Gider("658");
+            var digerGiderZarar = Gider("659");
+            AltBaslik("  1 - Komisyon Giderleri (-)", -komisyonGider);
+            AltBaslik("  2 - Karşılık Giderleri (-)", -karsilikGider);
+            AltBaslik("  3 - Menkul Kıymet Satış Zararları (-)", -menkKiymetZarar);
+            AltBaslik("  4 - Kambiyo ve Borsa Değer Azalış Zararları (-)", -kambiyoZarar);
+            AltBaslik("  5 - Reeskont Faiz Giderleri (-)", -reeskontGider);
+            AltBaslik("  6 - Enflasyon Düzeltmesi Zararları (-)", -enflasyonZarar);
+            AltBaslik("  7 - Diğer Gider ve Zararlar (-)", -digerGiderZarar);
+            var fToplamGider = komisyonGider + karsilikGider + menkKiymetZarar +
+                               kambiyoZarar + reeskontGider + enflasyonZarar + digerGiderZarar;
+
+            // G - FİNANSMAN GİDERLERİ
+            AnaBaslik("G - FİNANSMAN GİDERLERİ (-)");
+            var kisaVadeliGider = Gider("660");
+            var uzunVadeliGider = Gider("661");
+            AltBaslik("  1 - Kısa Vadeli Borçlanma Giderleri (-)", -kisaVadeliGider);
+            AltBaslik("  2 - Uzun Vadeli Borçlanma Giderleri (-)", -uzunVadeliGider);
+            var finansmanGiderleri = kisaVadeliGider + uzunVadeliGider;
+
+            var olaganKar = faaliyetKar + eToplamGelir - fToplamGider - finansmanGiderleri;
+            GenelToplam("OLAĞAN KAR VEYA ZARARI", olaganKar);
+
+            // H - OLAĞANDIŞI GELİR VE KARLAR
+            AnaBaslik("H - OLAĞANDIŞI GELİR VE KARLAR");
+            var oncekiDonemGelir = Gelir("671");
+            var digerOlagandisiGelir = Gelir("679");
+            AltBaslik("  1 - Önceki Dönem Gelir ve Karları", oncekiDonemGelir);
+            AltBaslik("  2 - Diğer Olağandışı Gelir ve Karlar", digerOlagandisiGelir);
+            var hToplamGelir = oncekiDonemGelir + digerOlagandisiGelir;
+
+            // I - OLAĞANDIŞI GİDER VE ZARARLAR
+            AnaBaslik("I - OLAĞANDIŞI GİDER VE ZARARLAR (-)");
+            var calismayanGider = Gider("680");
+            var oncekiDonemGider = Gider("681");
+            var digerOlagandisiGider = Gider("689");
+            AltBaslik("  1 - Çalışmayan Kısım Gider ve Zararları (-)", -calismayanGider);
+            AltBaslik("  2 - Önceki Dönem Gider ve Zararları (-)", -oncekiDonemGider);
+            AltBaslik("  3 - Diğer Olağandışı Gider ve Zararlar (-)", -digerOlagandisiGider);
+            var iToplamGider = calismayanGider + oncekiDonemGider + digerOlagandisiGider;
+
+            var donemKar = olaganKar + hToplamGelir - iToplamGider;
+            GenelToplam("DÖNEM KARI VEYA ZARARI", donemKar);
+
+            // J - YASAL YÜKÜMLÜLÜKLER
+            AnaBaslik("J - YASAL YÜKÜMLÜLÜKLER");
+            var vergiKarsiligi = donemKar > 0 ? donemKar * 0.25m : 0;
+            AltBaslik("  1 - Dönem Karı Vergi ve Diğ. Yasal Yüküm. Karşılık. (-)", -vergiKarsiligi);
+
+            var donemNetKar = donemKar - vergiKarsiligi;
+            GenelToplam("DÖNEM NET KARI VEYA ZARARI", donemNetKar);
+
+            var ic = System.Globalization.CultureInfo.InvariantCulture;
+            ViewBag.BaslangicTarihi = baslangic;
+            ViewBag.BitisTarihi = bitis;
+            ViewBag.Firma = firm.Value.ToString("D3");
+            ViewBag.NetSatislar = netSatislar.ToString("F2", ic);
+            ViewBag.BrutKar = brutKar.ToString("F2", ic);
+            ViewBag.FaaliyetKar = faaliyetKar.ToString("F2", ic);
+            ViewBag.OlaganKar = olaganKar.ToString("F2", ic);
+            ViewBag.DonemKar = donemKar.ToString("F2", ic);
+            ViewBag.DonemNetKar = donemNetKar.ToString("F2", ic);
+
+            return View(model);
         }
-    }
 
-    // 1. SATIŞLAR
-    SatirEkle("A - BRÜT SATIŞLAR", 0, true);
-    HesapGrubuEkle(new[] { "600", "601", "602" });
-    var satislar = mizan.Where(x => !x.HesapKodu.Contains(".") &&
-        (x.HesapKodu.StartsWith("600") || x.HesapKodu.StartsWith("601") || x.HesapKodu.StartsWith("602")))
-        .Sum(x => x.Alacak);
-    SatirEkle("Brüt Satışlar Toplamı", satislar, true);
-
-    // 2. SATIŞ İNDİRİMLERİ
-    SatirEkle("B - SATIŞ İNDİRİMLERİ (-)", 0, true);
-    HesapGrubuEkle(new[] { "610", "611", "612" }, true);
-    var indirimler = mizan.Where(x => !x.HesapKodu.Contains(".") &&
-        (x.HesapKodu.StartsWith("610") || x.HesapKodu.StartsWith("611") || x.HesapKodu.StartsWith("612")))
-        .Sum(x => x.Alacak);
-    SatirEkle("Satış İndirimleri Toplamı", -indirimler, true);
-
-    var netSatislar = satislar - indirimler;
-    SatirEkle("NET SATIŞLAR", netSatislar, true);
-
-    // 3. SATIŞ MALİYETİ
-    SatirEkle("C - SATIŞLARIN MALİYETİ (-)", 0, true);
-    HesapGrubuEkle(new[] { "620", "621", "622", "623" }, true);
-    var satisMaliyeti = mizan.Where(x => !x.HesapKodu.Contains(".") &&
-        (x.HesapKodu.StartsWith("620") || x.HesapKodu.StartsWith("621") ||
-         x.HesapKodu.StartsWith("622") || x.HesapKodu.StartsWith("623")))
-        .Sum(x => x.Borc);
-    SatirEkle("Satış Maliyeti Toplamı", -satisMaliyeti, true);
-
-    decimal brutKar = netSatislar - satisMaliyeti;
-    SatirEkle("BRÜT SATIŞ KARI / ZARARI", brutKar, true);
-
-    // 4. FAALİYET GİDERLERİ
-    SatirEkle("D - FAALİYET GİDERLERİ (-)", 0, true);
-    HesapGrubuEkle(new[] { "630", "631", "632", "653", "654", "655", "656", "657", "658", "659" }, true);
-    var faaliyetGiderleri = mizan.Where(x => !x.HesapKodu.Contains(".") &&
-        (x.HesapKodu.StartsWith("630") || x.HesapKodu.StartsWith("631") ||
-         x.HesapKodu.StartsWith("632") || x.HesapKodu.StartsWith("653") ||
-         x.HesapKodu.StartsWith("654") || x.HesapKodu.StartsWith("655") ||
-         x.HesapKodu.StartsWith("656") || x.HesapKodu.StartsWith("657") ||
-         x.HesapKodu.StartsWith("658") || x.HesapKodu.StartsWith("659")))
-        .Sum(x => x.Borc);
-    SatirEkle("Faaliyet Giderleri Toplamı", -faaliyetGiderleri, true);
-
-    decimal faaliyetKar = brutKar - faaliyetGiderleri;
-    SatirEkle("FAALİYET KARI / ZARARI", faaliyetKar, true);
-
-    // 5. DİĞER GELİRLER
-    SatirEkle("E - DİĞER OLAĞAN GELİR VE KARLAR (+)", 0, true);
-    HesapGrubuEkle(new[] { "641", "642", "643", "644", "645", "646", "647", "648", "649", "671", "679" });
-    var digerGelirler = mizan.Where(x => !x.HesapKodu.Contains(".") &&
-        (x.HesapKodu.StartsWith("64") || x.HesapKodu.StartsWith("671") || x.HesapKodu.StartsWith("679")))
-        .Sum(x => x.Alacak);
-    SatirEkle("Diğer Gelirler Toplamı", digerGelirler, true);
-
-    // 6. FİNANSMAN GİDERLERİ
-    SatirEkle("F - FİNANSMAN GİDERLERİ (-)", 0, true);
-    HesapGrubuEkle(new[] { "660", "661" }, true);
-    var finansmanGiderleri = mizan.Where(x => !x.HesapKodu.Contains(".") &&
-        (x.HesapKodu.StartsWith("660") || x.HesapKodu.StartsWith("661")))
-        .Sum(x => x.Borc);
-    SatirEkle("Finansman Giderleri Toplamı", -finansmanGiderleri, true);
-
-    decimal olaganKar = faaliyetKar + digerGelirler - finansmanGiderleri;
-    SatirEkle("OLAĞAN KARI / ZARARI", olaganKar, true);
-
-    // 7. DİĞER GİDERLER
-    SatirEkle("G - OLAĞANDIŞI GELİR VE KARLAR (+)", 0, true);
-    HesapGrubuEkle(new[] { "671", "679" });
-    SatirEkle("H - OLAĞANDIŞI GİDER VE ZARARLAR (-)", 0, true);
-    HesapGrubuEkle(new[] { "680", "681", "689" }, true);
-    var digerGiderler = mizan.Where(x => !x.HesapKodu.Contains(".") &&
-        (x.HesapKodu.StartsWith("680") || x.HesapKodu.StartsWith("681") ||
-         x.HesapKodu.StartsWith("689")))
-        .Sum(x => x.Borc);
-    SatirEkle("Olağandışı Giderler Toplamı", -digerGiderler, true);
-
-    decimal donemKar = olaganKar - digerGiderler;
-    SatirEkle("DÖNEM KARI / ZARARI", donemKar, true);
-
-    decimal vergiKarsiligi = donemKar > 0 ? donemKar * 0.25m : 0;
-    SatirEkle("Vergi Karşılığı (-)", -vergiKarsiligi, false);
-
-    decimal donemNetKar = donemKar - vergiKarsiligi;
-    SatirEkle("DÖNEM NET KARI / ZARARI", donemNetKar, true);
-
-    ViewBag.BaslangicTarihi = baslangic;
-    ViewBag.BitisTarihi = bitis;
-    ViewBag.Firma = firm.Value.ToString("D3");
-    ViewBag.NetSatislar = netSatislar;
-    ViewBag.BrutKar = brutKar;
-    ViewBag.FaaliyetKar = faaliyetKar;
-    ViewBag.OlaganKar = olaganKar;
-    ViewBag.DonemKar = donemKar;
-    ViewBag.DonemNetKar = donemNetKar;
-
-    return View(model);
-}
         /*-----------------Gelir Tablosu Analizi-----------------*/
 
         [HttpGet]

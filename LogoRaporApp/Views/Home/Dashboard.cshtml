@@ -514,7 +514,7 @@
                     }
                     @if (canSee("GelirTablosu"))
                     {
-                        <a class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); karZararGetir()">📈 Gelir Tablosu</a>
+                        <a id="gelirTablosuMenuItem" class="submenu-item" href="javascript:void(0)" onclick="aktifMenuyuIsaretle(this); karZararGetir()">📈 Gelir Tablosu</a>
                     }
                     @if (canSee("Bilanco"))
                     {
@@ -1237,7 +1237,7 @@ function tersBakiyeTabloVurgula(uyarilar) {
                     });
             }
 
-                        function karZararGetir() {
+                                               function karZararGetir() {
                 fetch('/Home/KarZarar')
                     .then(res => res.text())
                     .then(data => {
@@ -1245,6 +1245,10 @@ function tersBakiyeTabloVurgula(uyarilar) {
                         document.getElementById("reportArea").style.display = "block";
                         document.getElementById("reportArea").innerHTML = data;
                         document.getElementById("pageTitle").innerText = "Gelir Tablosu";
+
+                        // Gelir tablosu menüsünü aktif yap
+                        var gelirTablosuMenuItem = document.getElementById("gelirTablosuMenuItem");
+                        if (gelirTablosuMenuItem) aktifMenuyuIsaretle(gelirTablosuMenuItem);
 
                         var scripts = document.getElementById("reportArea").querySelectorAll("script");
                         scripts.forEach(function (script) {
@@ -1254,7 +1258,6 @@ function tersBakiyeTabloVurgula(uyarilar) {
                         });
                     });
             }
-
 </script>
 <div id="footerInfo">
 
